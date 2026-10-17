@@ -1,0 +1,16 @@
+{
+  "name": "kijek",
+  "version": "0.1.0",
+  "description": "A Pi extension that detects LLM loops and nudges them out",
+  "type": "module",
+  "main": "src/kijek.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2",
+    "vitest": "^3.0.0"
+  }
+}
