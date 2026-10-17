@@ -17,6 +17,7 @@ export interface KijekConfig {
   detection: {
     toolLoopThreshold: number;
     chainLoopThreshold: number;
+    chainLoopWindowSize: number;
     reasoningLoopThreshold: number;
     outputSimilarityThreshold: number;
   };
@@ -48,6 +49,7 @@ const VALID_PROMPTS = Object.keys(PROMPT_PRESETS);
 interface SensitivityValues {
   toolLoopThreshold: number;
   chainLoopThreshold: number;
+  chainLoopWindowSize: number;
   reasoningLoopThreshold: number;
   outputSimilarityThreshold: number;
 }
@@ -56,18 +58,21 @@ const SENSITIVITY_PRESETS: Record<string, SensitivityValues> = {
   conservative: {
     toolLoopThreshold: 10,
     chainLoopThreshold: 10,
+    chainLoopWindowSize: 3,
     reasoningLoopThreshold: 10,
     outputSimilarityThreshold: 0.95,
   },
   balanced: {
     toolLoopThreshold: 5,
     chainLoopThreshold: 5,
+    chainLoopWindowSize: 3,
     reasoningLoopThreshold: 5,
     outputSimilarityThreshold: 0.85,
   },
   aggressive: {
     toolLoopThreshold: 3,
     chainLoopThreshold: 3,
+    chainLoopWindowSize: 3,
     reasoningLoopThreshold: 3,
     outputSimilarityThreshold: 0.7,
   },
@@ -84,6 +89,7 @@ export const DEFAULT_CONFIG: KijekConfig = {
   detection: {
     toolLoopThreshold: 5,
     chainLoopThreshold: 5,
+    chainLoopWindowSize: 3,
     reasoningLoopThreshold: 5,
     outputSimilarityThreshold: 0.85,
   },
