@@ -264,6 +264,39 @@ function registerCommands(api: MinimalExtensionAPI): void {
     },
   });
 
+  // ── /kijek-stick ───────────────────────────────────────────────────────
+  // Manual nudge — "hit the LLM with a stick" regardless of detection
+  api.registerCommand("kijek-stick", {
+    description: "Manually nudge the LLM (hit it with a stick)",
+    handler: async (args: string, ctx: MinimalExtensionCommandContext) => {
+      if (!logManager) {
+        ctx.ui.notify("Kijek not initialised. Start a new session.", "warning");
+        return;
+      }
+
+      const customMessage = args.trim() || undefined;
+
+      // Build a manual detection result
+      const result: DetectionResult = {
+        type: "toolLoop",
+        details: customMessage || "Manual nudge — user hit the LLM with a stick",
+        count: 1,
+      };
+
+      // Apply the configured nudge
+      await applyNudge(config, result, {
+        pi,
+        ui: ctx.ui,
+        isIdle: ctx.isIdle,
+      });
+
+      // Log the manual nudge
+      logManager.addEntry(result, config.nudgeMode);
+
+      ctx.ui.notify("Stick applied! 🥢", "info");
+    },
+  });
+
   // ── /kijek ─────────────────────────────────────────────────────────────
   api.registerCommand("kijek", {
     description: "Kijek loop detector configuration",
@@ -332,7 +365,6 @@ function registerCommands(api: MinimalExtensionAPI): void {
         }
         config.sensitivity = sensitivity;
         // Apply sensitivity preset
-        const preset = DEFAULT_CONFIG.detection;
         const presetMap: Record<string, { toolLoopThreshold: number; reasoningLoopThreshold: number; outputSimilarityThreshold: number }> = {
           conservative: { toolLoopThreshold: 10, reasoningLoopThreshold: 10, outputSimilarityThreshold: 0.95 },
           balanced: { toolLoopThreshold: 5, reasoningLoopThreshold: 5, outputSimilarityThreshold: 0.85 },
