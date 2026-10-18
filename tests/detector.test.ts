@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { LoopDetector } from "../src/detector.js";
+import { LoopDetector, replay, type DebugDump } from "../src/detector.js";
 
 // ── Helper: create a detector with custom thresholds ──────────────────────
 
@@ -335,5 +335,60 @@ describe("LoopDetector — edge cases", () => {
     detector.startMessage();
     // After startMessage, same tool can be called again without triggering
     expect(detector.recordToolCall("read_file")).toBeNull();
+  });
+
+  // ── Replay tests ──────────────────────────────────────────────────────
+
+  describe("replay", () => {
+    it("replays a tool loop from a debug dump", () => {
+      const dump: DebugDump = {
+        scenario: "tool-loop",
+        events: [
+          { type: "tool_call", toolName: "read" },
+          { type: "tool_call", toolName: "read" },
+          { type: "tool_call", toolName: "read" },
+          { type: "tool_call", toolName: "read" },
+          { type: "tool_call", toolName: "read" },
+        ],
+      };
+
+      const detector = replay(dump);
+      const history = detector.getToolCallHistory();
+      // 5th call triggers loop and returns early (not added to history)
+      expect(history).toEqual(["read", "read", "read", "read"]);
+    });
+
+    it("replays mixed events (tool, reasoning, output)", () => {
+      const dump: DebugDump = {
+        scenario: "mixed",
+        events: [
+          { type: "reasoning", text: "Let me read the file" },
+          { type: "tool_call", toolName: "read" },
+          { type: "output", text: "Reading file..." },
+          { type: "reasoning", text: "Let me read the file" },
+        ],
+      };
+
+      const detector = replay(dump);
+      // 2nd identical reasoning triggers loop, not added to blocks
+      expect(detector.getReasoningBlocks()).toEqual(["Let me read the file"]);
+      expect(detector.getOutputBlocks()).toEqual(["Reading file..."]);
+      expect(detector.getToolCallHistory()).toEqual(["read"]);
+    });
+
+    it("replays an output loop", () => {
+      const output = "The file has been read successfully.";
+      const dump: DebugDump = {
+        scenario: "output-loop",
+        events: [
+          { type: "output", text: output },
+          { type: "output", text: output },
+        ],
+      };
+
+      const detector = replay(dump);
+      // 2nd identical output triggers loop, not added to blocks
+      expect(detector.getOutputBlocks()).toEqual([output]);
+    });
   });
 });

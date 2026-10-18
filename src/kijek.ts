@@ -14,12 +14,32 @@
  *   /kijek toggle     Toggle a detection type on/off (tool | chain | reasoning | output)
  *   /kijek status     Alias for showing current config
  *   /kijek-log        Toggle sidebar widget / show last 20 log entries
+ *   /kijek-dump       Dump current message state as a debug fixture
  */
 
-import { LoopDetector, type DetectionResult } from "./detector.js";
+import { LoopDetector, type DetectionResult, type DebugDump } from "./detector.js";
 import { getNudgePrompt, loadConfig, saveConfig, type KijekConfig, DEFAULT_CONFIG } from "./config.js";
 import { applyNudge, type KijekNudgeEntry } from "./nudge.js";
 import { LogManager, type LogEntry } from "./log.js";
+
+// ---------------------------------------------------------------------------
+// File system helpers
+// ---------------------------------------------------------------------------
+
+/** Get the debug dump directory path (next to kijek.json). */
+function getDebugDir(): string {
+  const base = process.env.HOME ?? process.env.USERPROFILE ?? ".";
+  return `${base}/.pi/agent/extensions/kijek/debug`;
+}
+
+/** Ensure the debug directory exists. */
+function ensureDebugDir(): void {
+  const fs = require("fs");
+  const dir = getDebugDir();
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Minimal Pi types (provided at runtime by @earendil-works/pi-coding-agent)
@@ -290,6 +310,47 @@ function registerCommands(api: MinimalExtensionAPI): void {
         ctx.ui.setWidget("kijek-log", undefined);
         ctx.ui.notify("Kijek log widget disabled", "info");
       }
+    },
+  });
+
+  // ── /kijek-dump ────────────────────────────────────────────────────────
+  api.registerCommand("kijek-dump", {
+    description: "Dump current message state as a debug fixture",
+    handler: async (_args: string, ctx: MinimalExtensionCommandContext) => {
+      if (!detector) {
+        ctx.ui.notify("Kijek not initialised. Start a new session.", "warning");
+        return;
+      }
+
+      ensureDebugDir();
+
+      const dump: DebugDump = {
+        scenario: "captured-from-pi",
+        capturedAt: new Date().toISOString(),
+        events: [
+          ...detector.getToolCallHistory().map((toolName: string) => ({
+            type: "tool_call" as const,
+            toolName,
+          })),
+          ...detector.getReasoningBlocks().map((text: string) => ({
+            type: "reasoning" as const,
+            text,
+          })),
+          ...detector.getOutputBlocks().map((text: string) => ({
+            type: "output" as const,
+            text,
+          })),
+        ],
+      };
+
+      const fs = require("fs");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `dump-${timestamp}.json`;
+      const filepath = `${getDebugDir()}/${filename}`;
+
+      fs.writeFileSync(filepath, JSON.stringify(dump, null, 2));
+
+      ctx.ui.notify(`Kijek dump saved to ${filepath}\nEvents: ${dump.events.length}`, "info");
     },
   });
 

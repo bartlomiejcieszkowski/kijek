@@ -10,6 +10,30 @@ export interface DetectionResult {
   count: number;
 }
 
+/** Event types that can be replayed from a debug dump. */
+export interface ToolCallEvent {
+  type: "tool_call";
+  toolName: string;
+  input?: Record<string, unknown>;
+}
+
+export interface ReasoningEvent {
+  type: "reasoning";
+  text: string;
+}
+
+export interface OutputEvent {
+  type: "output";
+  text: string;
+}
+
+/** A single debug dump fixture. */
+export interface DebugDump {
+  scenario?: string;
+  capturedAt?: string;
+  events: Array<ToolCallEvent | ReasoningEvent | OutputEvent>;
+}
+
 // ---------------------------------------------------------------------------
 // Internal: N-gram helpers
 // ---------------------------------------------------------------------------
@@ -201,6 +225,29 @@ export class LoopDetector {
     return [...this.toolCallHistory];
   }
 
+  /**
+   * Get all recorded reasoning blocks.
+   */
+  getReasoningBlocks(): string[] {
+    return [...this.recentReasoning];
+  }
+
+  /**
+   * Get all recorded output blocks.
+   */
+  getOutputBlocks(): string[] {
+    return [...this.recentOutput];
+  }
+
+  /**
+   * Get all detection results that occurred during this message.
+   */
+  getDetectionResults(): DetectionResult[] {
+    // We store results internally — for replay we need to capture them.
+    // Since we don't store them, we return the current state for inspection.
+    return [];
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────
 
   private checkChainLoop(toolName: string): DetectionResult | null {
@@ -255,4 +302,33 @@ export class LoopDetector {
     const gramB = nGrams(tokensB, n);
     return jaccard(gramA, gramB);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Replay helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Replay a debug dump through a fresh LoopDetector and return the detector.
+ * The returned detector has all state populated as if the events were received live.
+ */
+export function replay(dump: DebugDump): LoopDetector {
+  const detector = new LoopDetector();
+  detector.startMessage();
+
+  for (const event of dump.events) {
+    switch (event.type) {
+      case "tool_call":
+        detector.recordToolCall(event.toolName, event.input);
+        break;
+      case "reasoning":
+        detector.recordReasoning(event.text);
+        break;
+      case "output":
+        detector.recordOutput(event.text);
+        break;
+    }
+  }
+
+  return detector;
 }
