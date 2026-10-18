@@ -246,15 +246,15 @@ describe("LoopDetector — getToolCallHistory", () => {
     expect(detector.getToolCallHistory()).toEqual([]);
   });
 
-  it("returns tool call history", () => {
+  it("returns tool call history with names and inputs", () => {
     const detector = new LoopDetector();
-    detector.recordToolCall("read_file");
-    detector.recordToolCall("write_file");
-    detector.recordToolCall("read_file");
+    detector.recordToolCall("read_file", { path: "a.txt" });
+    detector.recordToolCall("write_file", { content: "hello" });
+    detector.recordToolCall("read_file", { path: "b.txt" });
     expect(detector.getToolCallHistory()).toEqual([
-      "read_file",
-      "write_file",
-      "read_file",
+      { name: "read_file", input: { path: "a.txt" } },
+      { name: "write_file", input: { content: "hello" } },
+      { name: "read_file", input: { path: "b.txt" } },
     ]);
   });
 
@@ -262,8 +262,8 @@ describe("LoopDetector — getToolCallHistory", () => {
     const detector = new LoopDetector();
     detector.recordToolCall("read_file");
     const history = detector.getToolCallHistory();
-    history.push("fake_tool");
-    expect(detector.getToolCallHistory()).not.toContain("fake_tool");
+    history.push({ name: "fake_tool", input: {} } as any);
+    expect(detector.getToolCallHistory()).not.toContain({ name: "fake_tool" } as any);
   });
 });
 
@@ -355,7 +355,11 @@ describe("LoopDetector — edge cases", () => {
       const detector = replay(dump);
       const history = detector.getToolCallHistory();
       // 4th call triggers loop and returns early (not added to history)
-      expect(history).toEqual(["read", "read", "read"]);
+      expect(history).toEqual([
+        { name: "read", input: {} },
+        { name: "read", input: {} },
+        { name: "read", input: {} },
+      ]);
     });
 
     it("replays mixed events (tool, reasoning, output)", () => {
@@ -373,7 +377,7 @@ describe("LoopDetector — edge cases", () => {
       // 2nd identical reasoning triggers loop, not added to blocks
       expect(detector.getReasoningBlocks()).toEqual(["Let me read the file"]);
       expect(detector.getOutputBlocks()).toEqual(["Reading file..."]);
-      expect(detector.getToolCallHistory()).toEqual(["read"]);
+      expect(detector.getToolCallHistory()).toEqual([{ name: "read", input: {} }]);
     });
 
     it("replays an output loop", () => {

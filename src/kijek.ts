@@ -498,8 +498,11 @@ function registerCommands(api: MinimalExtensionAPI): void {
         lines.push(border("Recent tools:"));
         const maxTools = 5;
         const recent = toolCalls.slice(-maxTools);
-        for (const tool of recent) {
-          lines.push(border(`  • ${tool}`));
+        for (const t of recent) {
+          const inputStr = Object.keys(t.input).length > 0
+            ? ` (${Object.keys(t.input).join(", ")})`
+            : "";
+          lines.push(border(`  • ${t.name}${inputStr}`));
         }
       }
 
@@ -508,7 +511,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
         const maxReasoning = 3;
         const recent = reasoning.slice(-maxReasoning);
         for (const r of recent) {
-          const truncated = r.length > innerW - 4 ? r.slice(0, innerW - 7) + "…" : r;
+          const truncated = r.text.length > innerW - 4 ? r.text.slice(0, innerW - 7) + "…" : r.text;
           lines.push(border(`  • ${truncated}`));
         }
       }
@@ -518,7 +521,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
         const maxOutput = 3;
         const recent = output.slice(-maxOutput);
         for (const o of recent) {
-          const truncated = o.length > innerW - 4 ? o.slice(0, innerW - 7) + "…" : o;
+          const truncated = o.text.length > innerW - 4 ? o.text.slice(0, innerW - 7) + "…" : o.text;
           lines.push(border(`  • ${truncated}`));
         }
       }
@@ -552,17 +555,18 @@ function registerCommands(api: MinimalExtensionAPI): void {
         scenario: "captured-from-pi",
         capturedAt: new Date().toISOString(),
         events: [
-          ...detector.getToolCallHistory().map((toolName: string) => ({
+          ...detector.getToolCallHistory().map((t) => ({
             type: "tool_call" as const,
-            toolName,
+            toolName: t.name,
+            input: t.input,
           })),
-          ...detector.getReasoningBlocks().map((text: string) => ({
+          ...detector.getReasoningBlocks().map((r) => ({
             type: "reasoning" as const,
-            text,
+            text: r.text,
           })),
-          ...detector.getOutputBlocks().map((text: string) => ({
+          ...detector.getOutputBlocks().map((o) => ({
             type: "output" as const,
-            text,
+            text: o.text,
           })),
         ],
       };

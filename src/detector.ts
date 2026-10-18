@@ -95,9 +95,9 @@ export class LoopDetector {
   private toolCounts = new Map<string, number>();
   private chainWindow: string[] = [];
   private chainFrequencies: Map<string, number> = new Map();
-  private recentReasoning: string[] = [];
-  private recentOutput: string[] = [];
-  private toolCallHistory: string[] = [];
+  private recentReasoning: { text: string }[] = [];
+  private recentOutput: { text: string }[] = [];
+  private toolCallHistory: { name: string; input: Record<string, unknown> }[] = [];
 
   private readonly config: KijekConfig;
 
@@ -126,7 +126,7 @@ export class LoopDetector {
    */
   recordToolCall(
     toolName: string,
-    _args?: Record<string, unknown>,
+    args?: Record<string, unknown>,
   ): DetectionResult | null {
     // --- Single-tool loop detection (per-message) ---
     const currentCount = this.toolCounts.get(toolName) ?? 0;
@@ -150,8 +150,8 @@ export class LoopDetector {
       if (chainResult) return chainResult;
     }
 
-    // Track history
-    this.toolCallHistory.push(toolName);
+    // Track full event
+    this.toolCallHistory.push({ name: toolName, input: args || {} });
 
     return null;
   }
@@ -219,23 +219,23 @@ export class LoopDetector {
   }
 
   /**
-   * Get the current tool call history (for logging).
+   * Get the current tool call history (for logging and debug).
    */
-  getToolCallHistory(): string[] {
+  getToolCallHistory(): { name: string; input: Record<string, unknown> }[] {
     return [...this.toolCallHistory];
   }
 
   /**
    * Get all recorded reasoning blocks.
    */
-  getReasoningBlocks(): string[] {
+  getReasoningBlocks(): { text: string }[] {
     return [...this.recentReasoning];
   }
 
   /**
    * Get all recorded output blocks.
    */
-  getOutputBlocks(): string[] {
+  getOutputBlocks(): { text: string }[] {
     return [...this.recentOutput];
   }
 
