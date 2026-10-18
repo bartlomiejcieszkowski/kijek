@@ -3,17 +3,29 @@ node_modules/
 
 # Build output
 dist/
+*.js
+*.js.map
+*.d.ts
 
-# Log files
+# Logs
 *.log
-
-# Optional project-local config (not committed)
 .kijek.json
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Testing
+coverage/
+
+# Documentation (local)
+docs/
+
+# Project files
+IDEA.md
