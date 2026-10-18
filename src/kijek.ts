@@ -98,7 +98,7 @@ interface MinimalExtensionContext {
   ui: {
     notify(message: string, type?: "info" | "warning" | "error"): void;
     setWidget(key: string, content: string[] | undefined): void;
-    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number }; nonCapturing?: boolean; onHandle?: (handle: OverlayHandle) => void }): Promise<T>;
+    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number }; nonCapturing?: boolean }): Promise<T>;
   };
   isIdle(): boolean;
 }
@@ -108,7 +108,7 @@ interface MinimalExtensionCommandContext {
   ui: {
     notify(message: string, type?: "info" | "warning" | "error"): void;
     setWidget(key: string, content: string[] | undefined): void;
-    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number }; nonCapturing?: boolean; onHandle?: (handle: OverlayHandle) => void }): Promise<T>;
+    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number }; nonCapturing?: boolean }): Promise<T>;
   };
   isIdle(): boolean;
 }
@@ -348,12 +348,46 @@ function registerCommands(api: MinimalExtensionAPI): void {
         logManager.setOverlayVisible(true);
         ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log overlay enabled", "info");
         await ctx.ui.custom<void>(
-          (_tui, _theme, _kb, _done) => new LogOverlayComponent(),
-          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 }, onHandle: (handle: OverlayHandle) => { logOverlayHandle = handle; } },
+          (tui, theme, _kb, done) => new LogOverlayShell(tui, theme, done),
+          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 } },
         );
       }
     },
   });
+
+  // ── Log overlay shell ──────────────────────────────────────────────────
+  /**
+   * Shell component — calls done() immediately so input isn't blocked,
+   * then creates the actual non-capturing overlay via tui.showOverlay().
+   */
+  class LogOverlayShell {
+    focused = false;
+    private tui: TUI;
+    private done: () => void;
+
+    constructor(tui: TUI, _theme: Theme, done: () => void) {
+      this.tui = tui;
+      this.done = done;
+      // Create the non-capturing overlay
+      logOverlayHandle = this.tui.showOverlay(new LogOverlayComponent(), {
+        nonCapturing: true,
+        anchor: "top-right",
+        width: 45,
+      });
+      // Done immediately — input is not blocked
+      this.done();
+    }
+
+    render(_width: number): string[] {
+      return [];
+    }
+
+    invalidate(): void {}
+
+    dispose(): void {
+      logOverlayHandle = null;
+    }
+  }
 
   // ── Log overlay component ──────────────────────────────────────────────
   /**
