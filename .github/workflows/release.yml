@@ -1,76 +1,46 @@
-# Release workflow — adapted from pi-copilot-plugins
-#
-# Uses NPM_TOKEN secret for authentication (OIDC flow also available).
-# Commented out because kijek is a Pi extension, not an npm package.
-# Uncomment when publishing to npm is needed.
-#
-# name: Release
+name: Release
 
-# on:
-#   workflow_dispatch:
-#     inputs:
-#       bump:
-#         description: "Version bump type"
-#         required: true
-#         default: "patch"
-#         type: choice
-#         options:
-#           - patch
-#           - minor
-#           - major
+on:
+  push:
+    tags:
+      - 'v*'
 
-# jobs:
-#   release:
-#     runs-on: ubuntu-latest
+permissions:
+  contents: write
 
-#     steps:
-#       - uses: actions/checkout@v7
-#         with:
-#           fetch-depth: 0
-#           token: ${{ secrets.RELEASE_TOKEN }}
+jobs:
+  release:
+    runs-on: ubuntu-latest
 
-#       - uses: actions/setup-node@v7
-#         with:
-#           node-version: 24
-#           cache: 'npm'
-#           registry-url: 'https://registry.npmjs.org'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
 
-#       - run: npm ci
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
-#       - name: Type check
-#         run: npx tsc --noEmit
+      - run: npm ci
 
-#       - name: Test
-#         run: npm test
+      - name: Type check
+        run: npx tsc --noEmit
 
-#       - name: Bump version
-#         run: |
-#           npm version ${{ github.event.inputs.bump }} --no-git-tag-version
+      - name: Test
+        run: npm test
 
-#       - name: Commit version bump
-#         run: |
-#           git config user.name "Release Bot"
-#           git config user.email "release@kijek.dev"
-#           git add package.json
-#           git commit -m "chore: version bump ${{ github.event.inputs.bump }}"
-#           git tag "v$(node -p \"require('./package.json').version\")"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
-#       - name: Push changes
-#         run: |
-#           git push origin main
-#           git push origin --tags
-
-#       - name: Publish to npm
-#         run: npm publish
-#         env:
-#           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-#         # TODO: Uncomment when kijek becomes an npm package
-
-#       - name: Create GitHub Release
-#         uses: softprops/action-gh-release@v2
-#         with:
-#           tag_name: "v$(node -p \"require('./package.json').version\")"
-#           generate_release_notes: true
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-#         # TODO: Uncomment when kijek has tagged releases
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # TODO: Uncomment when kijek becomes an npm package
