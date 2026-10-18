@@ -163,27 +163,28 @@ function initDetector(cfg: KijekConfig): void {
 /** Format the current config as a readable string. */
 function formatConfig(cfg: KijekConfig): string {
   const lines: string[] = [];
-  lines.push(`┌─ Kijek v${version} ──────────────────────────┐`);
-  lines.push(`│ Nudge mode:       ${cfg.nudgeMode.padEnd(30)}│`);
-  lines.push(`│ Nudge prompt:     ${cfg.nudgePrompt.padEnd(30)}│`);
+  lines.push(`┌─ Kijek v${version.padEnd(8)} ──────────────────────────┐`);
+  const padEnd = lines[0].length - 21 - 1;
+  lines.push(`│ Nudge mode:        ${cfg.nudgeMode.padEnd(padEnd)}│`);
+  lines.push(`│ Nudge prompt:      ${cfg.nudgePrompt.padEnd(padEnd)}│`);
   if (cfg.nudgePrompt === "custom" && cfg.nudgePromptCustom) {
-    lines.push(`│ Custom prompt:    ${(cfg.nudgePromptCustom.length > 28 ? cfg.nudgePromptCustom.slice(0, 28) + "…" : cfg.nudgePromptCustom).padEnd(30)}│`);
+    lines.push(`│ Custom prompt:     ${(cfg.nudgePromptCustom.length > padEnd ? cfg.nudgePromptCustom.slice(0, padEnd-3) + "…" : cfg.nudgePromptCustom).padEnd(padEnd)}│`);
   }
-  lines.push(`│ Sensitivity:      ${cfg.sensitivity.padEnd(30)}│`);
+  lines.push(`│ Sensitivity:       ${cfg.sensitivity.padEnd(padEnd)}│`);
   lines.push("│                                            │");
-  lines.push("│ Detection thresholds:                     │");
-  lines.push(`│   Tool loop:      ${cfg.detection.toolLoopThreshold.toString().padEnd(26)}│`);
-  lines.push(`│   Chain loop:     ${cfg.detection.chainLoopThreshold.toString().padEnd(26)}│`);
-  lines.push(`│   Reasoning loop: ${cfg.detection.reasoningLoopThreshold.toString().padEnd(26)}│`);
-  lines.push(`│   Output similar.: ${(cfg.detection.outputSimilarityThreshold.toFixed(2)).padEnd(26)}│`);
+  lines.push("│ Detection thresholds:                      │");
+  lines.push(`│   Tool loop:       ${cfg.detection.toolLoopThreshold.toString().padEnd(padEnd)}│`);
+  lines.push(`│   Chain loop:      ${cfg.detection.chainLoopThreshold.toString().padEnd(padEnd)}│`);
+  lines.push(`│   Reasoning loop:  ${cfg.detection.reasoningLoopThreshold.toString().padEnd(padEnd)}│`);
+  lines.push(`│   Output similar.: ${(cfg.detection.outputSimilarityThreshold.toFixed(2)).padEnd(padEnd)}│`);
   lines.push("│                                            │");
-  lines.push("│ Enabled:                                  │");
+  lines.push("│ Enabled:                                   │");
   const enabled = cfg.enabled;
-  lines.push(`│   Tool loop:    ${(enabled.toolLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
-  lines.push(`│   Chain loop:   ${(enabled.chainLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
-  lines.push(`│   Reasoning:    ${(enabled.reasoningLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
-  lines.push(`│   Output loop:  ${(enabled.outputLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
-  lines.push("└──────────────────── │ヽ༼ ͠ ͡° ͜ʖ ͡° ༽ﾉ┃ ─┘");
+  lines.push(`│   Tool loop:       ${(enabled.toolLoop ? "✓ yes" : "✗ no").padEnd(padEnd)}│`);
+  lines.push(`│   Chain loop:      ${(enabled.chainLoop ? "✓ yes" : "✗ no").padEnd(padEnd)}│`);
+  lines.push(`│   Reasoning:       ${(enabled.reasoningLoop ? "✓ yes" : "✗ no").padEnd(padEnd)}│`);
+  lines.push(`│   Output loop:     ${(enabled.outputLoop ? "✓ yes" : "✗ no").padEnd(padEnd)}│`);
+  lines.push("└────────────────────────── │ヽ༼ ͠ ͡° ͜ʖ ͡° ༽ﾉ┃ ─┘");
   return lines.join("\n");
 }
 
