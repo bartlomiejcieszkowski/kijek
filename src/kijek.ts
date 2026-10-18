@@ -92,7 +92,7 @@ interface MinimalExtensionContext {
   ui: {
     notify(message: string, type?: "info" | "warning" | "error"): void;
     setWidget(key: string, content: string[] | undefined): void;
-    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number } }): Promise<T>;
+    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number }; nonCapturing?: boolean }): Promise<T>;
   };
   isIdle(): boolean;
 }
@@ -102,7 +102,7 @@ interface MinimalExtensionCommandContext {
   ui: {
     notify(message: string, type?: "info" | "warning" | "error"): void;
     setWidget(key: string, content: string[] | undefined): void;
-    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number } }): Promise<T>;
+    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number }; nonCapturing?: boolean }): Promise<T>;
   };
   isIdle(): boolean;
 }
@@ -337,7 +337,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
         // Show overlay
         await ctx.ui.custom(
           (tui, theme, _kb, done) => new LogOverlayComponent(tui, theme, done),
-          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 } },
+          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 }, nonCapturing: true },
         );
       } else {
         ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log overlay disabled", "info");

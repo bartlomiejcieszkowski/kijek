@@ -63,10 +63,10 @@ const SENSITIVITY_PRESETS: Record<string, SensitivityValues> = {
     outputSimilarityThreshold: 0.95,
   },
   balanced: {
-    toolLoopThreshold: 5,
-    chainLoopThreshold: 5,
+    toolLoopThreshold: 4,
+    chainLoopThreshold: 4,
     chainLoopWindowSize: 3,
-    reasoningLoopThreshold: 5,
+    reasoningLoopThreshold: 4,
     outputSimilarityThreshold: 0.85,
   },
   aggressive: {
@@ -87,10 +87,10 @@ export const DEFAULT_CONFIG: KijekConfig = {
   nudgePrompt: "simple",
   sensitivity: "balanced",
   detection: {
-    toolLoopThreshold: 5,
-    chainLoopThreshold: 5,
+    toolLoopThreshold: 4,
+    chainLoopThreshold: 4,
     chainLoopWindowSize: 3,
-    reasoningLoopThreshold: 5,
+    reasoningLoopThreshold: 4,
     outputSimilarityThreshold: 0.85,
   },
   enabled: {

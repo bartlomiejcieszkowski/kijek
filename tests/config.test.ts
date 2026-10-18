@@ -59,9 +59,9 @@ describe("DEFAULT_CONFIG", () => {
   });
 
   it("has correct detection thresholds", () => {
-    expect(DEFAULT_CONFIG.detection.toolLoopThreshold).toBe(5);
-    expect(DEFAULT_CONFIG.detection.chainLoopThreshold).toBe(5);
-    expect(DEFAULT_CONFIG.detection.reasoningLoopThreshold).toBe(5);
+    expect(DEFAULT_CONFIG.detection.toolLoopThreshold).toBe(4);
+    expect(DEFAULT_CONFIG.detection.chainLoopThreshold).toBe(4);
+    expect(DEFAULT_CONFIG.detection.reasoningLoopThreshold).toBe(4);
     expect(DEFAULT_CONFIG.detection.outputSimilarityThreshold).toBe(0.85);
   });
 
@@ -94,7 +94,7 @@ describe("loadConfig (no file)", () => {
     expect(config.nudgeMode).toBe("alert");
     expect(config.nudgePrompt).toBe("simple");
     expect(config.sensitivity).toBe("balanced");
-    expect(config.detection.toolLoopThreshold).toBe(5);
+    expect(config.detection.toolLoopThreshold).toBe(4);
   });
 });
 
@@ -251,8 +251,8 @@ describe("loadConfig (sensitivity preset)", () => {
     writeConfigFile(tmpDir, JSON.stringify({ sensitivity: "balanced" }));
     const config = loadConfig();
     expect(config.sensitivity).toBe("balanced");
-    expect(config.detection.toolLoopThreshold).toBe(5);
-    expect(config.detection.reasoningLoopThreshold).toBe(5);
+    expect(config.detection.toolLoopThreshold).toBe(4);
+    expect(config.detection.reasoningLoopThreshold).toBe(4);
     expect(config.detection.outputSimilarityThreshold).toBe(0.85);
   });
 

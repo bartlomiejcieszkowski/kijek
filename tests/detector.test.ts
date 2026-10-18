@@ -354,8 +354,8 @@ describe("LoopDetector — edge cases", () => {
 
       const detector = replay(dump);
       const history = detector.getToolCallHistory();
-      // 5th call triggers loop and returns early (not added to history)
-      expect(history).toEqual(["read", "read", "read", "read"]);
+      // 4th call triggers loop and returns early (not added to history)
+      expect(history).toEqual(["read", "read", "read"]);
     });
 
     it("replays mixed events (tool, reasoning, output)", () => {
