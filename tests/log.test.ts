@@ -160,9 +160,9 @@ describe("renderWidgetLines", () => {
 
     const lines = mgr.renderWidgetLines();
 
-    expect(lines).toContain("┌─ Kijek Log ──────────────────────────┐");
-    expect(lines).toContain("│ No detections yet.                    │");
-    expect(lines).toContain("└───────────────────────────────────────┘");
+    expect(lines).toContain("┌─ Kijek Log ───────────────────────────────┐");
+    expect(lines).toContain("│ No detections yet.                        │");
+    expect(lines).toContain("└──────────────────────── ╰( ･~･)つ── 🤖💬 ─┘");
   });
 
   it("renders entries with timestamps and labels", () => {
