@@ -188,7 +188,7 @@ function registerEventHooks(api: MinimalExtensionAPI): void {
   });
 
   // ── turn_start ─────────────────────────────────────────────────────────
-  pi.on("turn_start", () => {
+  api.on("turn_start", () => {
     if (detector) {
       detector.startMessage();
       currentMessage = true;
@@ -232,6 +232,35 @@ function registerEventHooks(api: MinimalExtensionAPI): void {
     if (detector) {
       detector.reset();
     }
+  });
+
+  // ── session_tree (branch change) ───────────────────────────────────────
+  api.on("session_tree", () => {
+    // Reset detection state on branch change — abandoned branches' state
+    // must not leak into the new branch.
+    currentMessage = false;
+    if (detector) {
+      detector.reset();
+    }
+    // Reconstruct log entries from the new branch
+    if (logManager && api.sessionManager) {
+      logManager.loadFromSession(api.sessionManager);
+    }
+  });
+
+  // ── session_shutdown ───────────────────────────────────────────────────
+  api.on("session_shutdown", () => {
+    currentMessage = false;
+    if (detector) {
+      detector.reset();
+    }
+  });
+
+  // ── tool_result ────────────────────────────────────────────────────────
+  // We don't need tool_result for detection (tool_call is sufficient),
+  // but we register it for potential future use.
+  api.on("tool_result", () => {
+    // Reserved for future enhancements (e.g., detecting tool-result-based loops)
   });
 }
 
