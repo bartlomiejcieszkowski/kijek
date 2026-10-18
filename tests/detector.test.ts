@@ -375,8 +375,8 @@ describe("LoopDetector — edge cases", () => {
 
       const detector = replay(dump);
       // 2nd identical reasoning triggers loop, not added to blocks
-      expect(detector.getReasoningBlocks()).toEqual(["Let me read the file"]);
-      expect(detector.getOutputBlocks()).toEqual(["Reading file..."]);
+      expect(detector.getReasoningBlocks()).toEqual([{ text: "Let me read the file" }]);
+      expect(detector.getOutputBlocks()).toEqual([{ text: "Reading file..." }]);
       expect(detector.getToolCallHistory()).toEqual([{ name: "read", input: {} }]);
     });
 
@@ -392,7 +392,7 @@ describe("LoopDetector — edge cases", () => {
 
       const detector = replay(dump);
       // 2nd identical output triggers loop, not added to blocks
-      expect(detector.getOutputBlocks()).toEqual([output]);
+      expect(detector.getOutputBlocks()).toEqual([{ text: output }]);
     });
   });
 });
