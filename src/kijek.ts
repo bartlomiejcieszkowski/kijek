@@ -25,6 +25,20 @@ import { applyNudge, type KijekNudgeEntry } from "./nudge.js";
 import { LogManager } from "./log.js";
 
 // ---------------------------------------------------------------------------
+// Minimal Pi/TUI types (provided at runtime by @earendil-works/pi-coding-agent)
+// ---------------------------------------------------------------------------
+
+/** Minimal TUI interface for overlay components. */
+interface TUI {
+  requestRender(): void;
+}
+
+/** Minimal Theme interface. */
+interface Theme {
+  fg(color: string, text: string): string;
+}
+
+// ---------------------------------------------------------------------------
 // Version — read from package.json at runtime
 // ---------------------------------------------------------------------------
 
@@ -78,6 +92,7 @@ interface MinimalExtensionContext {
   ui: {
     notify(message: string, type?: "info" | "warning" | "error"): void;
     setWidget(key: string, content: string[] | undefined): void;
+    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number } }): Promise<T>;
   };
   isIdle(): boolean;
 }
@@ -87,6 +102,7 @@ interface MinimalExtensionCommandContext {
   ui: {
     notify(message: string, type?: "info" | "warning" | "error"): void;
     setWidget(key: string, content: string[] | undefined): void;
+    custom<T>(component: (tui: TUI, theme: Theme, kb: unknown, done: () => void) => T, options?: { overlay?: boolean; overlayOptions?: { anchor?: string; width?: number } }): Promise<T>;
   };
   isIdle(): boolean;
 }
@@ -307,26 +323,56 @@ function registerEventHooks(api: MinimalExtensionAPI): void {
 function registerCommands(api: MinimalExtensionAPI): void {
   // ── /kijek-log ─────────────────────────────────────────────────────────
   api.registerCommand("kijek-log", {
-    description: "Toggle Kijek log sidebar widget",
+    description: "Toggle Kijek log overlay (top-right)",
     handler: async (_args: string, ctx: MinimalExtensionCommandContext) => {
       if (!logManager) {
         ctx.ui.notify("Kijek not initialised. Start a new session.", "warning");
         return;
       }
 
-      const visible = logManager.toggleWidget();
+      const visible = logManager.toggleOverlay();
 
       if (visible) {
-        // Show widget
-        ctx.ui.setWidget("kijek-log", logManager.renderWidgetLines());
-        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log widget enabled", "info");
+        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log overlay enabled", "info");
+        // Show overlay
+        await ctx.ui.custom(
+          (tui, theme, _kb, done) => new LogOverlayComponent(tui, theme, done),
+          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 } },
+        );
       } else {
-        // Hide widget
-        ctx.ui.setWidget("kijek-log", undefined);
-        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log widget disabled", "info");
+        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log overlay disabled", "info");
       }
     },
   });
+
+  // ── Log overlay component ──────────────────────────────────────────────
+  /**
+   * Log overlay component — renders the log entries in an overlay at top-right.
+   */
+  class LogOverlayComponent {
+    private tui: TUI;
+    private theme: Theme;
+    private done: () => void;
+
+    constructor(tui: TUI, theme: Theme, done: () => void) {
+      this.tui = tui;
+      this.theme = theme;
+      this.done = done;
+    }
+
+    render(width: number): string[] {
+      if (!logManager) return [];
+      return logManager.renderOverlayLines();
+    }
+
+    invalidate(): void {
+      this.tui.requestRender();
+    }
+
+    dispose(): void {
+      this.done();
+    }
+  }
 
   // ── /kijek-dump ────────────────────────────────────────────────────────
   api.registerCommand("kijek-dump", {

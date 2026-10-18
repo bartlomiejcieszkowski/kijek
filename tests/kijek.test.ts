@@ -24,8 +24,8 @@ function createMockCtx() {
       notify: vi.fn((message: string, type?: "info" | "warning" | "error") => {
         calls.push({ type: "notify", args: [message, type] });
       }),
-      setWidget: vi.fn((key: string, content: string[] | undefined) => {
-        calls.push({ type: "setWidget", args: [key, content] });
+      setOverlay: vi.fn((key: string, content: string[] | undefined) => {
+        calls.push({ type: "setOverlay", args: [key, content] });
       }),
     },
     isIdle: vi.fn(() => true),
@@ -59,7 +59,7 @@ describe("Kijek extension integration", () => {
       const config: KijekConfig = { ...DEFAULT_CONFIG, nudgeMode: "silent" as const, detection: { ...DEFAULT_CONFIG.detection, toolLoopThreshold: 3 } };
       const detector = new LoopDetector(config);
       const logManager = new LogManager();
-      logManager.setWidgetVisible(true);
+      logManager.setOverlayVisible(true);
 
       const pi = createMockPi();
       const ctx = createMockCtx();
@@ -101,10 +101,10 @@ describe("Kijek extension integration", () => {
       expect(entries[0].detectionType).toBe("toolLoop");
       expect(entries[0].action).toBe("silent");
 
-      // Verify widget renders
-      const widgetLines = logManager.renderWidgetLines();
-      expect(widgetLines.length).toBeGreaterThan(0);
-      expect(widgetLines[0]).toContain("Kijek Log");
+      // Verify overlay renders
+      const overlayLines = logManager.renderOverlayLines();
+      expect(overlayLines.length).toBeGreaterThan(0);
+      expect(overlayLines[0]).toContain("Kijek Log");
     });
 
     it("chain loop → nudge → log entry", async () => {
@@ -238,43 +238,44 @@ describe("Kijek extension integration", () => {
     });
   });
 
-  describe("log widget", () => {
+  describe("log overlay", () => {
     it("renders header and footer", () => {
       const logManager = new LogManager();
-      logManager.setWidgetVisible(true);
+      logManager.setOverlayVisible(true);
 
-      const lines = logManager.renderWidgetLines();
+      const lines = logManager.renderOverlayLines();
       expect(lines[0]).toContain("Kijek Log");
       expect(lines[lines.length - 1]).toContain("└");
     });
 
     it("shows 'no detections' when empty", () => {
       const logManager = new LogManager();
-      logManager.setWidgetVisible(true);
+      logManager.setOverlayVisible(true);
 
-      const lines = logManager.renderWidgetLines();
+      const lines = logManager.renderOverlayLines();
       expect(lines.some(l => l.includes("No detections"))).toBe(true);
     });
 
-    it("returns empty array when hidden", () => {
+    it("always renders content regardless of overlay visibility", () => {
       const logManager = new LogManager();
-      logManager.setWidgetVisible(false);
+      logManager.setOverlayVisible(false);
 
-      const lines = logManager.renderWidgetLines();
-      expect(lines).toEqual([]);
+      const lines = logManager.renderOverlayLines();
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines[0]).toContain("Kijek Log");
     });
 
     it("toggles visibility", () => {
       const logManager = new LogManager();
-      expect(logManager.isWidgetVisible()).toBe(false);
+      expect(logManager.isOverlayVisible()).toBe(false);
 
-      const visible = logManager.toggleWidget();
+      const visible = logManager.toggleOverlay();
       expect(visible).toBe(true);
-      expect(logManager.isWidgetVisible()).toBe(true);
+      expect(logManager.isOverlayVisible()).toBe(true);
 
-      const hidden = logManager.toggleWidget();
+      const hidden = logManager.toggleOverlay();
       expect(hidden).toBe(false);
-      expect(logManager.isWidgetVisible()).toBe(false);
+      expect(logManager.isOverlayVisible()).toBe(false);
     });
   });
 

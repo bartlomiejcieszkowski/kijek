@@ -145,20 +145,23 @@ describe("getEntries", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tests — widget rendering
+// Tests — overlay rendering
 // ---------------------------------------------------------------------------
 
-describe("renderWidgetLines", () => {
-  it("returns empty array when widget is hidden", () => {
+describe("renderOverlayLines", () => {
+  it("always renders content regardless of overlay visibility", () => {
     const mgr = new LogManager();
-    expect(mgr.renderWidgetLines()).toEqual([]);
+
+    const lines = mgr.renderOverlayLines();
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines[0]).toContain("Kijek Log");
   });
 
   it("shows 'No detections yet' when empty", () => {
     const mgr = new LogManager();
-    mgr.setWidgetVisible(true);
+    mgr.setOverlayVisible(true);
 
-    const lines = mgr.renderWidgetLines();
+    const lines = mgr.renderOverlayLines();
 
     expect(lines).toContain("┌─ Kijek Log ───────────────────────────────┐");
     expect(lines).toContain("│ No detections yet.                        │");
@@ -167,12 +170,12 @@ describe("renderWidgetLines", () => {
 
   it("renders entries with timestamps and labels", () => {
     const mgr = new LogManager();
-    mgr.setWidgetVisible(true);
+    mgr.setOverlayVisible(true);
     mgr.setAppendEntry(vi.fn());
 
     mgr.addEntry(makeDetection("toolLoop", "Tool 'read' called 5 times", 5), "alert");
 
-    const lines = mgr.renderWidgetLines();
+    const lines = mgr.renderOverlayLines();
 
     // Check header
     expect(lines[0]).toContain("Kijek Log");
@@ -187,13 +190,13 @@ describe("renderWidgetLines", () => {
 
   it("truncates long details", () => {
     const mgr = new LogManager();
-    mgr.setWidgetVisible(true);
+    mgr.setOverlayVisible(true);
     mgr.setAppendEntry(vi.fn());
 
-    const longDetail = "This is a very long detail that should be truncated because it exceeds the widget width limit";
+    const longDetail = "This is a very long detail that should be truncated because it exceeds the overlay width limit";
     mgr.addEntry(makeDetection("reasoningLoop", longDetail, 5), "interrupt");
 
-    const lines = mgr.renderWidgetLines();
+    const lines = mgr.renderOverlayLines();
     const entryLine = lines.find((l) => l.includes("Reasoning loop"));
     expect(entryLine).toBeDefined();
     expect(entryLine).toContain("…");
@@ -201,13 +204,13 @@ describe("renderWidgetLines", () => {
 
   it("maps detection types correctly", () => {
     const mgr = new LogManager();
-    mgr.setWidgetVisible(true);
+    mgr.setOverlayVisible(true);
     mgr.setAppendEntry(vi.fn());
 
     mgr.addEntry(makeDetection("chainLoop", "Chain repeated", 3), "silent");
     mgr.addEntry(makeDetection("outputLoop", "Output repeated", 3), "interrupt");
 
-    const lines = mgr.renderWidgetLines();
+    const lines = mgr.renderOverlayLines();
     const text = lines.join("\n");
 
     expect(text).toContain("Chain loop");
@@ -216,14 +219,14 @@ describe("renderWidgetLines", () => {
 
   it("maps actions correctly", () => {
     const mgr = new LogManager();
-    mgr.setWidgetVisible(true);
+    mgr.setOverlayVisible(true);
     mgr.setAppendEntry(vi.fn());
 
     mgr.addEntry(makeDetection("toolLoop", "x", 1), "silent");
     mgr.addEntry(makeDetection("chainLoop", "x", 1), "alert");
     mgr.addEntry(makeDetection("outputLoop", "x", 1), "interrupt");
 
-    const lines = mgr.renderWidgetLines();
+    const lines = mgr.renderOverlayLines();
     const text = lines.join("\n");
 
     expect(text).toContain("Silent redirect");
@@ -233,26 +236,26 @@ describe("renderWidgetLines", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tests — widget toggle
+// Tests — overlay toggle
 // ---------------------------------------------------------------------------
 
-describe("widget toggle", () => {
+describe("overlay toggle", () => {
   it("starts hidden", () => {
     const mgr = new LogManager();
-    expect(mgr.isWidgetVisible()).toBe(false);
+    expect(mgr.isOverlayVisible()).toBe(false);
   });
 
   it("toggles on", () => {
     const mgr = new LogManager();
-    expect(mgr.toggleWidget()).toBe(true);
-    expect(mgr.isWidgetVisible()).toBe(true);
+    expect(mgr.toggleOverlay()).toBe(true);
+    expect(mgr.isOverlayVisible()).toBe(true);
   });
 
   it("toggles off", () => {
     const mgr = new LogManager();
-    mgr.setWidgetVisible(true);
-    expect(mgr.toggleWidget()).toBe(false);
-    expect(mgr.isWidgetVisible()).toBe(false);
+    mgr.setOverlayVisible(true);
+    expect(mgr.toggleOverlay()).toBe(false);
+    expect(mgr.isOverlayVisible()).toBe(false);
   });
 });
 

@@ -1,5 +1,5 @@
 /**
- * Log Management — sidebar widget, session entry storage, branch reconstruction.
+ * Log Management — overlay display, session entry storage, branch reconstruction.
  *
  * Log entries are stored as custom session entries (type: "kijek-log") so they
  * survive across turns and branches. On `session_start` and `session_tree`,
@@ -11,6 +11,11 @@ import type { DetectionResult } from "./detector.js";
 // ---------------------------------------------------------------------------
 // Minimal Pi types (provided at runtime by @earendil-works/pi-coding-agent)
 // ---------------------------------------------------------------------------
+
+/** Minimal overlay handle for visibility control. */
+interface OverlayHandle {
+  setHidden(hidden: boolean): void;
+}
 
 /** Minimal session entry — custom type variant. */
 interface SessionCustomEntry {
@@ -95,13 +100,21 @@ function actionLabel(action: string): string {
 
 /**
  * Manages loop-detection log entries: in-memory storage, session persistence,
- * branch reconstruction, and sidebar widget rendering.
+ * branch reconstruction, and overlay rendering.
  */
 export class LogManager {
   private entries: LogEntry[] = [];
-  private widgetVisible = false;
+  private overlayHandle: OverlayHandle | null = null;
   private appendEntryFn: ((customType: string, data?: unknown) => void) | null =
     null;
+  private overlayVisible = false;
+
+  /**
+   * Register the overlay handle for visibility control.
+   */
+  setOverlayHandle(handle: OverlayHandle): void {
+    this.overlayHandle = handle;
+  }
 
   /**
    * Register the session entry persistence function (provided by the main
@@ -140,33 +153,35 @@ export class LogManager {
   }
 
   /**
-   * Check if the widget is currently visible.
+   * Check if the overlay is currently visible.
    */
-  isWidgetVisible(): boolean {
-    return this.widgetVisible;
+  isOverlayVisible(): boolean {
+    return this.overlayVisible;
   }
 
   /**
-   * Toggle widget visibility. Returns the new state.
+   * Set overlay visibility state.
    */
-  toggleWidget(): boolean {
-    this.widgetVisible = !this.widgetVisible;
-    return this.widgetVisible;
+  setOverlayVisible(visible: boolean): void {
+    this.overlayVisible = visible;
   }
 
   /**
-   * Set widget visibility.
+   * Toggle overlay visibility via the overlay handle.
+   * Returns the new state.
    */
-  setWidgetVisible(visible: boolean): void {
-    this.widgetVisible = visible;
+  toggleOverlay(): boolean {
+    this.overlayVisible = !this.overlayVisible;
+    if (this.overlayHandle) {
+      this.overlayHandle.setHidden(!this.overlayVisible);
+    }
+    return this.overlayVisible;
   }
 
   /**
-   * Render the sidebar widget content as an array of display lines.
-   * Returns an empty array if the widget is not visible.
+   * Render the overlay content as an array of display lines.
    */
-  renderWidgetLines(): string[] {
-    if (!this.widgetVisible) return [];
+  renderOverlayLines(): string[] {
 
     const entries = this.getEntries();
 
