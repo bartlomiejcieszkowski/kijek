@@ -144,6 +144,7 @@ let detector: LoopDetector | null = null;
 let logManager: LogManager | null = null;
 let currentMessage = false;
 let logOverlayHandle: OverlayHandle | null = null;
+let debugOverlayHandle: OverlayHandle | null = null;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -400,6 +401,135 @@ function registerCommands(api: MinimalExtensionAPI): void {
     render(width: number): string[] {
       if (!logManager) return [];
       return logManager.renderOverlayLines();
+    }
+
+    invalidate(): void {}
+
+    dispose(): void {}
+  }
+
+  // ── /kijek-debug ───────────────────────────────────────────────────────
+  api.registerCommand("kijek-debug", {
+    description: "Toggle Kijek debug overlay (top-right)",
+    handler: async (_args: string, ctx: MinimalExtensionCommandContext) => {
+      if (!detector) {
+        ctx.ui.notify("Kijek not initialised. Start a new session.", "warning");
+        return;
+      }
+
+      if (debugOverlayHandle) {
+        // Hide existing overlay
+        debugOverlayHandle.setHidden(true);
+        debugOverlayHandle = null;
+        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek debug overlay disabled", "info");
+      } else {
+        // Show overlay
+        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek debug overlay enabled", "info");
+        await ctx.ui.custom<void>(
+          (tui, theme, _kb, done) => new DebugOverlayShell(tui, theme, done),
+          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 } },
+        );
+      }
+    },
+  });
+
+  // ── Debug overlay shell ────────────────────────────────────────────────
+  /**
+   * Shell component — calls done() immediately so input isn't blocked,
+   * then creates the actual non-capturing overlay via tui.showOverlay().
+   */
+  class DebugOverlayShell {
+    focused = false;
+    private tui: TUI;
+    private done: () => void;
+
+    constructor(tui: TUI, _theme: Theme, done: () => void) {
+      this.tui = tui;
+      this.done = done;
+      // Create the non-capturing overlay
+      debugOverlayHandle = this.tui.showOverlay(new DebugOverlayComponent(), {
+        nonCapturing: true,
+        anchor: "top-right",
+        width: 45,
+      });
+      // Done immediately — input is not blocked
+      this.done();
+    }
+
+    render(_width: number): string[] {
+      return [];
+    }
+
+    invalidate(): void {}
+
+    dispose(): void {
+      debugOverlayHandle = null;
+    }
+  }
+
+  // ── Debug overlay component ────────────────────────────────────────────
+  /**
+   * Debug overlay component — renders the current detector state.
+   */
+  class DebugOverlayComponent {
+    focused = false;
+
+    render(width: number): string[] {
+      if (!detector) return [];
+
+      const toolCalls = detector.getToolCallHistory();
+      const reasoning = detector.getReasoningBlocks();
+      const output = detector.getOutputBlocks();
+
+      const innerW = Math.max(1, width - 2);
+      const border = (c: string) => `│${c.padEnd(innerW)}│`;
+      const padLine = (s: string) => s.padEnd(innerW);
+      const lines: string[] = [];
+
+      lines.push(`┌${"─".repeat(innerW)}┐`);
+      lines.push(border(" Kijek Debug"));
+      lines.push(`├${"─".repeat(innerW)}┤`);
+      lines.push(border(`Tool calls: ${toolCalls.length}`));
+      lines.push(border(`Reasoning:  ${reasoning.length}`));
+      lines.push(border(`Output:     ${output.length}`));
+      lines.push(`├${"─".repeat(innerW)}┤`);
+
+      if (toolCalls.length > 0) {
+        lines.push(border("Recent tools:"));
+        const maxTools = 5;
+        const recent = toolCalls.slice(-maxTools);
+        for (const tool of recent) {
+          lines.push(border(`  • ${tool}`));
+        }
+      }
+
+      if (reasoning.length > 0) {
+        lines.push(border("Recent reasoning:"));
+        const maxReasoning = 3;
+        const recent = reasoning.slice(-maxReasoning);
+        for (const r of recent) {
+          const truncated = r.length > innerW - 4 ? r.slice(0, innerW - 7) + "…" : r;
+          lines.push(border(`  • ${truncated}`));
+        }
+      }
+
+      if (output.length > 0) {
+        lines.push(border("Recent output:"));
+        const maxOutput = 3;
+        const recent = output.slice(-maxOutput);
+        for (const o of recent) {
+          const truncated = o.length > innerW - 4 ? o.slice(0, innerW - 7) + "…" : o;
+          lines.push(border(`  • ${truncated}`));
+        }
+      }
+
+      if (toolCalls.length === 0 && reasoning.length === 0 && output.length === 0) {
+        lines.push(border("No events yet."));
+      }
+
+      lines.push(`└${"─".repeat(innerW)}┘`);
+
+      return lines;
     }
 
     invalidate(): void {}
