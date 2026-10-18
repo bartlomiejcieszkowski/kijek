@@ -4,13 +4,35 @@
   "description": "A Pi extension that detects LLM loops and nudges them out",
   "type": "module",
   "main": "src/kijek.ts",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev": "tsc --watch"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.4",
     "typescript": "^7.0.2",
     "vitest": "^3.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/bartlomiejcieszkowski/kijek/issues",
+    "email": "bartlomiej.cieszkowski@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bartlomiejcieszkowski/kijek.git"
+  },
+  "homepage": "https://github.com/bartlomiejcieszkowski/kijek",
+  "author": "Bartlomiej Cieszkowski <bartlomiej.cieszkowski@gmail.com>",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "src/kijek.ts"
+    ]
   }
 }

@@ -6,6 +6,11 @@
 
 Kijek is a Pi extension that detects when the LLM gets stuck in repetitive behavior patterns and applies configurable nudges to break the cycle.
 
+```
+╰( ･~･)つ── 🤖💬
+╰( °□°)つ───🤖💬
+```
+
 ## Problem
 
 LLMs can get stuck in loops — repeating the same tool calls, reasoning steps, or output patterns — without realizing it. The user sees the loop immediately, but the LLM doesn't. Kijek detects these loops automatically and applies a nudge to help the LLM recover.

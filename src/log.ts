@@ -171,10 +171,14 @@ export class LogManager {
     const entries = this.getEntries();
 
     if (entries.length === 0) {
-      return ["┌─ Kijek Log ──────────────────────────┐", "│ No detections yet.                    │", "└───────────────────────────────────────┘"];
+      return [
+        "┌─ Kijek Log ───────────────────────────────┐",
+        "│ No detections yet.                        │",
+        "└──────────────────────── ╰( ･~･)つ── 🤖💬 ─┘"];
     }
 
-    const lines = ["┌─ Kijek Log ──────────────────────────┐"];
+    const lines = [
+        "┌─ Kijek Log ───────────────────────────────┐"];
 
     for (const entry of entries) {
       const time = formatTime(entry.timestamp);
@@ -196,7 +200,7 @@ export class LogManager {
     for (let i = currentLines; i < maxLines - 1; i++) {
       lines.push("│".padEnd(43) + "│");
     }
-    lines.push("└───────────────────────────────────────┘");
+    lines.push("└──────────────────────── ╰( ･~･)つ── 🤖💬 ─┘");
 
     return lines;
   }

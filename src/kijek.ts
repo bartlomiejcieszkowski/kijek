@@ -319,11 +319,11 @@ function registerCommands(api: MinimalExtensionAPI): void {
       if (visible) {
         // Show widget
         ctx.ui.setWidget("kijek-log", logManager.renderWidgetLines());
-        ctx.ui.notify("Kijek log widget enabled", "info");
+        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log widget enabled", "info");
       } else {
         // Hide widget
         ctx.ui.setWidget("kijek-log", undefined);
-        ctx.ui.notify("Kijek log widget disabled", "info");
+        ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log widget disabled", "info");
       }
     },
   });
@@ -365,7 +365,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
 
       fs.writeFileSync(filepath, JSON.stringify(dump, null, 2));
 
-      ctx.ui.notify(`Kijek dump saved to ${filepath}\nEvents: ${dump.events.length}`, "info");
+      ctx.ui.notify(`(╯°□°)╯︵ ┻━┻ 🤖💬\nKijek dump saved to ${filepath}\nEvents: ${dump.events.length}`, "info");
     },
   });
 
@@ -398,7 +398,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
       // Log the manual nudge
       logManager.addEntry(result, config.nudgeMode);
 
-      ctx.ui.notify("Stick applied! 🥢", "info");
+      ctx.ui.notify(`╰( °□°)つ───🤖💬\nStick applied!`, "info");
     },
   });
 
@@ -415,7 +415,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
 
       // ── Show config (no args or "status") ────────────────────────────
       if (trimmed === "" || trimmed === "status") {
-        ctx.ui.notify(formatConfig(config), "info");
+        ctx.ui.notify(`╰( ･~･)つ── 🤖💬\n${formatConfig(config)}`, "info");
         return;
       }
 
