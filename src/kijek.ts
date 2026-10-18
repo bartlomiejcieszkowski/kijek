@@ -6,13 +6,15 @@
  * (silent / alert / interrupt) and logs the event.
  *
  * Commands:
- *   /kijek            Show current configuration
- *   /kijek mode       Set nudge mode (silent | alert | interrupt)
- *   /kijek prompt     Set nudge prompt (simple | subtle | moderate | direct | technical | custom)
- *   /kijek sensitivity Set sensitivity (conservative | balanced | aggressive)
- *   /kijek thresholds Show current thresholds
- *   /kijek toggle     Toggle a detection type on/off (tool | chain | reasoning | output)
- *   /kijek status     Alias for showing current config
+ *   /kijek            Manually nudge the LLM (hit it with a stick)
+ *   /kijek [message]  Same with custom message
+ *   /kijek-config     Show current configuration
+ *   /kijek-config mode       Set nudge mode (silent | alert | interrupt)
+ *   /kijek-config prompt     Set nudge prompt (simple | subtle | moderate | direct | technical | custom)
+ *   /kijek-config sensitivity Set sensitivity (conservative | balanced | aggressive)
+ *   /kijek-config thresholds Show current thresholds
+ *   /kijek-config toggle     Toggle a detection type on/off (tool | chain | reasoning | output)
+ *   /kijek-config status     Alias for showing current config
  *   /kijek-log        Toggle sidebar widget / show last 20 log entries
  *   /kijek-dump       Dump current message state as a debug fixture
  */
@@ -20,7 +22,20 @@
 import { LoopDetector, type DetectionResult, type DebugDump } from "./detector.js";
 import { getNudgePrompt, loadConfig, saveConfig, type KijekConfig, DEFAULT_CONFIG } from "./config.js";
 import { applyNudge, type KijekNudgeEntry } from "./nudge.js";
-import { LogManager, type LogEntry } from "./log.js";
+import { LogManager } from "./log.js";
+
+// ---------------------------------------------------------------------------
+// Version — read from package.json at runtime
+// ---------------------------------------------------------------------------
+
+/** Dynamic version string from package.json. */
+let version = "unknown";
+try {
+  const pkg = JSON.parse(require("fs").readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+  version = pkg.version ?? "unknown";
+} catch {
+  // package.json not found — keep default
+}
 
 // ---------------------------------------------------------------------------
 // File system helpers
@@ -125,7 +140,7 @@ function initDetector(cfg: KijekConfig): void {
 /** Format the current config as a readable string. */
 function formatConfig(cfg: KijekConfig): string {
   const lines: string[] = [];
-  lines.push("┌─ Kijek Configuration ─────────────────────┐");
+  lines.push(`┌─ Kijek v${version} ──────────────────────────┐`);
   lines.push(`│ Nudge mode:       ${cfg.nudgeMode.padEnd(30)}│`);
   lines.push(`│ Nudge prompt:     ${cfg.nudgePrompt.padEnd(30)}│`);
   if (cfg.nudgePrompt === "custom" && cfg.nudgePromptCustom) {
@@ -531,7 +546,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
 
       // ── Unknown subcommand ───────────────────────────────────────────
       ctx.ui.notify(
-        `Unknown subcommand: ${subcommand}\n\nUsage:\n  /kijek                          Manual nudge (hit with a stick)\n  /kijek [message]                Same with custom message\n  /kijek-config                   Show config\n  /kijek-config mode <silent|alert|interrupt>\n  /kijek-config prompt <simple|...|custom>\n  /kijek-config sensitivity <conservative|balanced|aggressive>\n  /kijek-config thresholds [type <value>]\n  /kijek-config toggle <tool|chain|reasoning|output>\n  /kijek-config status            Show config\n  /kijek-log                      Toggle log widget`,
+        `Unknown subcommand: ${subcommand}\n\nUsage:\n  /kijek                          Manual nudge (hit with a stick)\n  /kijek [message]                Same with custom message\n  /kijek-config                   Show config\n  /kijek-config mode <silent|alert|interrupt>\n  /kijek-config prompt <simple|...|custom>\n  /kijek-config sensitivity <conservative|balanced|aggressive>\n  /kijek-config thresholds [type <value>]\n  /kijek-config toggle <tool|chain|reasoning|output>\n  /kijek-config status            Show config\n  /kijek-config mode              Show current mode\n  /kijek-config prompt            Show current prompt\n  /kijek-config sensitivity       Show current sensitivity\n  /kijek-config thresholds        Show current thresholds\n  /kijek-config toggle            Show detection state\n  /kijek-log                      Toggle log widget\n  /kijek-dump                     Dump debug fixture`,
         "warning",
       );
     },
