@@ -166,7 +166,7 @@ export class LoopDetector {
 
     if (this.recentReasoning.length > 0) {
       const prev = this.recentReasoning[this.recentReasoning.length - 1];
-      const sim = this.computeSimilarity(prev, text);
+      const sim = this.computeSimilarity(prev.text, text);
       const threshold = this.config.detection?.outputSimilarityThreshold ?? 0.85;
       if (sim >= threshold) {
         return {
@@ -177,7 +177,7 @@ export class LoopDetector {
       }
     }
 
-    this.recentReasoning.push(text);
+    this.recentReasoning.push({ text });
     return null;
   }
 
@@ -191,7 +191,7 @@ export class LoopDetector {
 
     if (this.recentOutput.length > 0) {
       const prev = this.recentOutput[this.recentOutput.length - 1];
-      const sim = this.computeSimilarity(prev, text);
+      const sim = this.computeSimilarity(prev.text, text);
       const threshold = this.config.detection?.outputSimilarityThreshold ?? 0.85;
       if (sim >= threshold) {
         return {
@@ -202,7 +202,7 @@ export class LoopDetector {
       }
     }
 
-    this.recentOutput.push(text);
+    this.recentOutput.push({ text });
     return null;
   }
 
