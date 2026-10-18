@@ -264,9 +264,9 @@ function registerCommands(api: MinimalExtensionAPI): void {
     },
   });
 
-  // ── /kijek-stick ───────────────────────────────────────────────────────
+  // ── /kijek ─────────────────────────────────────────────────────────────
   // Manual nudge — "hit the LLM with a stick" regardless of detection
-  api.registerCommand("kijek-stick", {
+  api.registerCommand("kijek", {
     description: "Manually nudge the LLM (hit it with a stick)",
     handler: async (args: string, ctx: MinimalExtensionCommandContext) => {
       if (!logManager) {
@@ -297,8 +297,8 @@ function registerCommands(api: MinimalExtensionAPI): void {
     },
   });
 
-  // ── /kijek ─────────────────────────────────────────────────────────────
-  api.registerCommand("kijek", {
+  // ── /kijek-config ──────────────────────────────────────────────────────
+  api.registerCommand("kijek-config", {
     description: "Kijek loop detector configuration",
     handler: async (args: string, ctx: MinimalExtensionCommandContext) => {
       if (!detector) {
@@ -321,7 +321,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
       // ── mode ─────────────────────────────────────────────────────────
       if (subcommand === "mode") {
         if (!subArgs) {
-          ctx.ui.notify(`Current nudge mode: ${config.nudgeMode}\nUsage: /kijek mode <silent|alert|interrupt>`, "info");
+          ctx.ui.notify(`Current nudge mode: ${config.nudgeMode}\nUsage: /kijek-config mode <silent|alert|interrupt>`, "info");
           return;
         }
         const mode = subArgs.toLowerCase() as KijekConfig["nudgeMode"];
@@ -338,7 +338,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
       // ── prompt ───────────────────────────────────────────────────────
       if (subcommand === "prompt") {
         if (!subArgs) {
-          ctx.ui.notify(`Current nudge prompt: ${config.nudgePrompt}\nUsage: /kijek prompt <simple|subtle|moderate|direct|technical|custom>`, "info");
+          ctx.ui.notify(`Current nudge prompt: ${config.nudgePrompt}\nUsage: /kijek-config prompt <simple|subtle|moderate|direct|technical|custom>`, "info");
           return;
         }
         const prompt = subArgs.toLowerCase() as KijekConfig["nudgePrompt"];
@@ -355,7 +355,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
       // ── sensitivity ──────────────────────────────────────────────────
       if (subcommand === "sensitivity") {
         if (!subArgs) {
-          ctx.ui.notify(`Current sensitivity: ${config.sensitivity}\nUsage: /kijek sensitivity <conservative|balanced|aggressive>`, "info");
+          ctx.ui.notify(`Current sensitivity: ${config.sensitivity}\nUsage: /kijek-config sensitivity <conservative|balanced|aggressive>`, "info");
           return;
         }
         const sensitivity = subArgs.toLowerCase() as KijekConfig["sensitivity"];
@@ -391,7 +391,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
         // /kijek thresholds tool <N>
         const threshParts = subArgs.split(/\s+/);
         if (threshParts.length < 2) {
-          ctx.ui.notify(`Usage: /kijek thresholds <tool|chain|reasoning|output> <value>`, "warning");
+          ctx.ui.notify(`Usage: /kijek-config thresholds <tool|chain|reasoning|output> <value>`, "warning");
           return;
         }
         const threshType = threshParts[0].toLowerCase();
@@ -426,7 +426,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
       if (subcommand === "toggle") {
         if (!subArgs) {
           ctx.ui.notify(
-            `Current detection state:\n  Tool loop: ${config.enabled.toolLoop ? "on" : "off"}\n  Chain loop: ${config.enabled.chainLoop ? "on" : "off"}\n  Reasoning loop: ${config.enabled.reasoningLoop ? "on" : "off"}\n  Output loop: ${config.enabled.outputLoop ? "on" : "off"}\n\nUsage: /kijek toggle <tool|chain|reasoning|output>`,
+            `Current detection state:\n  Tool loop: ${config.enabled.toolLoop ? "on" : "off"}\n  Chain loop: ${config.enabled.chainLoop ? "on" : "off"}\n  Reasoning loop: ${config.enabled.reasoningLoop ? "on" : "off"}\n  Output loop: ${config.enabled.outputLoop ? "on" : "off"}\n\nUsage: /kijek-config toggle <tool|chain|reasoning|output>`,
             "info",
           );
           return;
@@ -441,7 +441,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
 
       // ── Unknown subcommand ───────────────────────────────────────────
       ctx.ui.notify(
-        `Unknown subcommand: ${subcommand}\n\nUsage:\n  /kijek                          Show config\n  /kijek mode <silent|alert|interrupt>\n  /kijek prompt <simple|...|custom>\n  /kijek sensitivity <conservative|balanced|aggressive>\n  /kijek thresholds [type <value>]\n  /kijek toggle <tool|chain|reasoning|output>\n  /kijek status                   Show config`,
+        `Unknown subcommand: ${subcommand}\n\nUsage:\n  /kijek                          Manual nudge (hit with a stick)\n  /kijek [message]                Same with custom message\n  /kijek-config                   Show config\n  /kijek-config mode <silent|alert|interrupt>\n  /kijek-config prompt <simple|...|custom>\n  /kijek-config sensitivity <conservative|balanced|aggressive>\n  /kijek-config thresholds [type <value>]\n  /kijek-config toggle <tool|chain|reasoning|output>\n  /kijek-config status            Show config\n  /kijek-log                      Toggle log widget`,
         "warning",
       );
     },

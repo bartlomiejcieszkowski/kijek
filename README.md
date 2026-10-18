@@ -77,22 +77,24 @@ All configuration is stored in `~/.pi/agent/extensions/kijek.json` and managed v
 
 | Command | Description |
 |---------|-------------|
-| `/kijek` | Show current configuration |
-| `/kijek status` | Alias for showing current config |
-| `/kijek mode <silent\|alert\|interrupt>` | Set nudge mode |
-| `/kijek prompt <simple\|subtle\|moderate\|direct\|technical\|custom>` | Set nudge prompt |
-| `/kijek sensitivity <conservative\|balanced\|aggressive>` | Set sensitivity level |
-| `/kijek thresholds [type <value>]` | Show or set thresholds (tool, chain, reasoning, output) |
-| `/kijek toggle <tool\|chain\|reasoning\|output>` | Toggle detection type on/off |
+| `/kijek` | Manually nudge the LLM (hit it with a stick) |
+| `/kijek [message]` | Same as above, with optional custom message |
+| `/kijek-config` | Show current configuration |
+| `/kijek-config status` | Alias for showing current config |
+| `/kijek-config mode <silent\|alert\|interrupt>` | Set nudge mode |
+| `/kijek-config prompt <simple\|subtle\|moderate\|direct\|technical\|custom>` | Set nudge prompt |
+| `/kijek-config sensitivity <conservative\|balanced\|aggressive>` | Set sensitivity level |
+| `/kijek-config thresholds [type <value>]` | Show or set thresholds (tool, chain, reasoning, output) |
+| `/kijek-config toggle <tool\|chain\|reasoning\|output>` | Toggle detection type on/off |
 | `/kijek-log` | Toggle sidebar widget showing last 20 log entries |
 
 ### Example
 
 ```
-/kijek sensitivity aggressive
-/kijek mode alert
-/kijek toggle reasoning off
-/kijek-log
+/kijek-config sensitivity aggressive
+/kijek-config mode alert
+/kijek-config toggle reasoning off
+/kijek "try a different approach"
 ```
 
 ## Logging
