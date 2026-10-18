@@ -1,6 +1,6 @@
 {
   "name": "kijek",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "A Pi extension that detects LLM loops and nudges them out",
   "type": "module",
   "main": "src/kijek.ts",
@@ -30,6 +30,17 @@
   "homepage": "https://github.com/bartlomiejcieszkowski/kijek",
   "author": "Bartlomiej Cieszkowski <bartlomiej.cieszkowski@gmail.com>",
   "license": "MIT",
+  "keywords": [
+    "kijek",
+    "llm",
+    "loop-detection",
+    "pi",
+    "ai",
+    "agent",
+    "pi-extension",
+    "pi-coding-agent",
+    "extension"
+  ],
   "pi": {
     "extensions": [
       "src/kijek.ts"

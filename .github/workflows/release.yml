@@ -1,4 +1,4 @@
-name: Release
+name: Publish Package
 
 on:
   push:
@@ -6,17 +6,14 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  id-token: write  # Required for OIDC
+  contents: read
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     environment:
       name: npmjs
-
     steps:
       - uses: actions/checkout@v7
 
@@ -25,10 +22,7 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false  # never use caching in release builds
-
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish  # Or: npm stage publish
