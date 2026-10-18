@@ -7,6 +7,7 @@ import {
   applySensitivity,
   isValidPrompt,
   isValidSensitivity,
+  getConfigPath,
   type KijekConfig,
 } from "../src/config.js";
 import {
@@ -15,6 +16,7 @@ import {
   writeFileSync,
   rmSync,
   mkdirSync,
+  existsSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -89,12 +91,13 @@ describe("loadConfig (no file)", () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("returns defaults when file does not exist", () => {
+  it("returns defaults and creates file when it does not exist", () => {
     const config = loadConfig();
     expect(config.nudgeMode).toBe("alert");
     expect(config.nudgePrompt).toBe("simple");
     expect(config.sensitivity).toBe("balanced");
     expect(config.detection.toolLoopThreshold).toBe(4);
+    expect(existsSync(getConfigPath())).toBe(true);
   });
 });
 

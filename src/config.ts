@@ -103,7 +103,7 @@ export const DEFAULT_CONFIG: KijekConfig = {
 
 // ── Config file path ───────────────────────────────────────────────────────
 
-function getConfigPath(): string {
+export function getConfigPath(): string {
   const home = process.env.HOME ?? process.env.USERPROFILE ?? ".";
   return join(home, ".pi", "agent", "extensions", "kijek.json");
 }
@@ -198,7 +198,10 @@ export function loadConfig(): KijekConfig {
     }
   }
 
-  return { ...DEFAULT_CONFIG };
+  // File doesn't exist or is invalid — create with defaults
+  const config = { ...DEFAULT_CONFIG };
+  saveConfig(config);
+  return config;
 }
 
 /**
