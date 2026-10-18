@@ -31,6 +31,12 @@ import { LogManager } from "./log.js";
 /** Minimal TUI interface for overlay components. */
 interface TUI {
   requestRender(): void;
+  showOverlay(component: unknown, options: { nonCapturing?: boolean; anchor?: string; width?: number }): OverlayHandle;
+}
+
+/** Minimal overlay handle for visibility control. */
+interface OverlayHandle {
+  hide(): void;
 }
 
 /** Minimal Theme interface. */
@@ -137,6 +143,7 @@ let config: KijekConfig = DEFAULT_CONFIG;
 let detector: LoopDetector | null = null;
 let logManager: LogManager | null = null;
 let currentMessage = false;
+let logOverlayHandle: OverlayHandle | null = null;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -334,44 +341,68 @@ function registerCommands(api: MinimalExtensionAPI): void {
 
       if (visible) {
         ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log overlay enabled", "info");
-        // Show overlay
-        await ctx.ui.custom(
-          (tui, theme, _kb, done) => new LogOverlayComponent(tui, theme, done),
-          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 }, nonCapturing: true },
+        // Show overlay — uses tui.showOverlay() internally with nonCapturing
+        await ctx.ui.custom<void>(
+          (tui, theme, _kb, done) => new LogOverlayWrapper(tui, theme, done),
+          { overlay: true, overlayOptions: { anchor: "top-right", width: 45 } },
         );
-      } else {
+      } else if (logOverlayHandle) {
         ctx.ui.notify("╰( ･~･)つ── 🤖💬\nKijek log overlay disabled", "info");
+        logOverlayHandle.hide();
+        logOverlayHandle = null;
       }
     },
   });
 
   // ── Log overlay component ──────────────────────────────────────────────
   /**
+   * Log overlay wrapper — shows the log via tui.showOverlay() with nonCapturing.
+   * Uses ctx.ui.custom() as a shell that calls done() immediately so input isn't blocked.
+   */
+  class LogOverlayWrapper {
+    focused = false;
+    private tui: TUI;
+    private done: () => void;
+
+    constructor(tui: TUI, _theme: Theme, done: () => void) {
+      this.tui = tui;
+      this.done = done;
+      // Create the non-capturing overlay via tui.showOverlay
+      logOverlayHandle = this.tui.showOverlay(new LogOverlayComponent(), {
+        nonCapturing: true,
+        anchor: "top-right",
+        width: 45,
+      });
+      // Done immediately — input is not blocked
+      this.done();
+    }
+
+    render(_width: number): string[] {
+      return [];
+    }
+
+    invalidate(): void {}
+
+    dispose(): void {
+      logOverlayHandle = null;
+    }
+  }
+
+  // ── Log overlay component ──────────────────────────────────────────────
+  /**
    * Log overlay component — renders the log entries in an overlay at top-right.
    */
   class LogOverlayComponent {
-    private tui: TUI;
-    private theme: Theme;
-    private done: () => void;
-
-    constructor(tui: TUI, theme: Theme, done: () => void) {
-      this.tui = tui;
-      this.theme = theme;
-      this.done = done;
-    }
+    focused = false;
 
     render(width: number): string[] {
       if (!logManager) return [];
       return logManager.renderOverlayLines();
     }
 
-    invalidate(): void {
-      this.tui.requestRender();
-    }
+    invalidate(): void {}
 
-    dispose(): void {
-      this.done();
-    }
+    dispose(): void {}
   }
 
   // ── /kijek-dump ────────────────────────────────────────────────────────
