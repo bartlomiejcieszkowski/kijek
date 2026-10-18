@@ -183,7 +183,7 @@ function formatConfig(cfg: KijekConfig): string {
   lines.push(`│   Chain loop:   ${(enabled.chainLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
   lines.push(`│   Reasoning:    ${(enabled.reasoningLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
   lines.push(`│   Output loop:  ${(enabled.outputLoop ? "✓ yes" : "✗ no").padEnd(30)}│`);
-  lines.push("└────────────────────────────────────────────┘");
+  lines.push("└──────────────────── │ヽ༼ ͠ ͡° ͜ʖ ͡° ༽ﾉ┃ ─┘");
   return lines.join("\n");
 }
 
