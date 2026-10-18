@@ -14,8 +14,8 @@ import type { DetectionResult } from "./detector.js";
 
 /** Minimal session entry — custom type variant. */
 interface SessionCustomEntry {
-  type: "custom";
-  customType: string;
+  type: string;
+  customType?: string;
   data?: unknown;
   id: string;
   parentId: string | null;
