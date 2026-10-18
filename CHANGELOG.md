@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-10-19
+
+### Added
+
+- `/kijek-debug` — overlay showing live detector state (tool calls, reasoning, output)
+- Full event storage in detector — tool calls now include input params, reasoning/output store full text
+- Config auto-creation on first run — default config written to disk if not present
+- `replay()` helper — replay debug dumps through the detector for test reproduction
+- Fixture test — auto-discovers and replays `.json` files from `tests/fixtures/`
+- Debug dump directory — `~/.pi/agent/extensions/kijek/debug/`
+
+### Changed
+
+- Default loop threshold lowered from 5 to 4
+- Upgraded vitest from 3.x to 5.x
+- Fixed widget border test to match runtime output
+- Fixed log overlay to use `tui.showOverlay()` directly (nonCapturing, no input blocking)
+
+### Fixed
+
+- Log overlay crash — added missing `focused = false` property
+- Log overlay input blocking — added `nonCapturing: true`
+- Config table border alignment
+
 ## [0.1.2] — 2026-10-18
 
 ### Added

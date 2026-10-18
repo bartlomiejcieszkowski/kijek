@@ -55,11 +55,11 @@ Kijek includes preset nudge prompts:
 
 Adjust detection sensitivity to control false positives:
 
-| Level | Tool | Reasoning | Output Similarity |
-|-------|------|-----------|-------------------|
-| `conservative` | 10 | 10 | 0.95 |
-| `balanced` (default) | 5 | 5 | 0.85 |
-| `aggressive` | 3 | 3 | 0.70 |
+| Level | Tool | Chain | Reasoning | Output Similarity |
+|-------|------|-------|-----------|-------------------|
+| `conservative` | 10 | 10 | 10 | 0.95 |
+| `balanced` (default) | 4 | 4 | 4 | 0.85 |
+| `aggressive` | 3 | 3 | 3 | 0.70 |
 
 ## Installation
 
@@ -77,6 +77,7 @@ cp -r kijek ~/.pi/agent/extensions/kijek
 ## Configuration
 
 All configuration is stored in `~/.pi/agent/extensions/kijek.json` and managed via slash commands.
+The config file is created automatically on first run with default values.
 
 ### Commands
 
@@ -91,7 +92,8 @@ All configuration is stored in `~/.pi/agent/extensions/kijek.json` and managed v
 | `/kijek-config sensitivity <conservative\|balanced\|aggressive>` | Set sensitivity level |
 | `/kijek-config thresholds [type <value>]` | Show or set thresholds (tool, chain, reasoning, output) |
 | `/kijek-config toggle <tool\|chain\|reasoning\|output>` | Toggle detection type on/off |
-| `/kijek-log` | Toggle sidebar widget showing last 20 log entries |
+| `/kijek-log` | Toggle overlay showing last 20 log entries |
+| `/kijek-debug` | Toggle overlay showing live detector state |
 | `/kijek-dump` | Dump current message state as a debug fixture |
 
 ### Example
@@ -104,7 +106,7 @@ All configuration is stored in `~/.pi/agent/extensions/kijek.json` and managed v
 /kijek-dump
 ```
 
-### Debug Dumps
+## Testing with Debug Dumps
 
 Use `/kijek-dump` to capture the current message state as a debug fixture. The dump is saved to `~/.pi/agent/extensions/kijek/debug/` with an auto-generated timestamp.
 
@@ -118,7 +120,7 @@ The fixture test (`tests/fixtures.test.ts`) automatically discovers and replays 
 
 ## Logging
 
-Kijek logs all detections to a sidebar widget (toggleable via `/kijek-log`). Each log entry shows:
+Kijek logs all detections to an overlay (toggleable via `/kijek-log`). Each log entry shows:
 
 - Timestamp
 - Detection type
@@ -127,15 +129,25 @@ Kijek logs all detections to a sidebar widget (toggleable via `/kijek-log`). Eac
 
 Log entries persist across turns and branches via custom session entries.
 
+### Debug Overlay
+
+Use `/kijek-debug` to view the current detector state in real time:
+
+- Tool call count with names and input parameters
+- Reasoning block count with text snippets
+- Output block count with text snippets
+
+## Testing with Debug Dumps
+
 ## Architecture
 
 ```
 src/
-├── kijek.ts      # Main extension — event hooks, commands, widget
+├── kijek.ts      # Main extension — event hooks, commands, overlays
 ├── detector.ts   # Detection engine — n-gram similarity, loop detection
 ├── nudge.ts      # Nudge strategies — silent / alert / interrupt
 ├── config.ts     # Configuration — loading, validation, presets
-└── log.ts        # Log management — sidebar widget, session persistence
+└── log.ts        # Log management — overlay, session persistence
 ```
 
 ## Development
