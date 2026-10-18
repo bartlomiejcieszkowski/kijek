@@ -23,6 +23,7 @@ Thumbs.db
 
 # Testing
 coverage/
+tests/fixtures/*.json
 
 # Documentation (local)
 docs/

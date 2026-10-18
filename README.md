@@ -87,6 +87,7 @@ All configuration is stored in `~/.pi/agent/extensions/kijek.json` and managed v
 | `/kijek-config thresholds [type <value>]` | Show or set thresholds (tool, chain, reasoning, output) |
 | `/kijek-config toggle <tool\|chain\|reasoning\|output>` | Toggle detection type on/off |
 | `/kijek-log` | Toggle sidebar widget showing last 20 log entries |
+| `/kijek-dump` | Dump current message state as a debug fixture |
 
 ### Example
 
@@ -95,7 +96,20 @@ All configuration is stored in `~/.pi/agent/extensions/kijek.json` and managed v
 /kijek-config mode alert
 /kijek-config toggle reasoning off
 /kijek "try a different approach"
+/kijek-dump
 ```
+
+### Debug Dumps
+
+Use `/kijek-dump` to capture the current message state as a debug fixture. The dump is saved to `~/.pi/agent/extensions/kijek/debug/` with an auto-generated timestamp.
+
+You can then copy the dump to `tests/fixtures/` in the project to replay it in tests:
+
+```bash
+cp ~/.pi/agent/extensions/kijek/debug/dump-*.json tests/fixtures/
+```
+
+The fixture test (`tests/fixtures.test.ts`) automatically discovers and replays all `.json` files in `tests/fixtures/`, verifying the detector correctly processes each captured scenario.
 
 ## Logging
 
