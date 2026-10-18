@@ -26,8 +26,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `replay()` helper — replay debug dumps through the detector
 - Fixture test — auto-discovers and replays `.json` files from `tests/fixtures/`
 - Dynamic version read from `package.json`
+- Emoji art on all command notifications (stick poking robot)
+- Emoji art on log widget borders
 - GitHub Actions CI workflow (Node 22 & 24, type check, verify package)
 - Commented-out release workflow (NPM_TOKEN auth, ready for npm publishing)
+- `build` and `dev` npm scripts
+- `@vitest/coverage-v8` dev dependency
+- `pi.extensions` field in package.json
+- Full repository metadata (bugs, homepage, author)
+
+### Changed
+
+- Excluded tests from TypeScript build output
+- Updated command help text to include all subcommands
 
 ### Notes
 
