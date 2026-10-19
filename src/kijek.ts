@@ -477,6 +477,7 @@ function registerCommands(api: MinimalExtensionAPI): void {
     render(width: number): string[] {
       if (!detector) return [];
 
+      const state = detector.getDebugState();
       const toolCalls = detector.getToolCallHistory();
       const reasoning = detector.getReasoningBlocks();
       const output = detector.getOutputBlocks();
@@ -494,36 +495,43 @@ function registerCommands(api: MinimalExtensionAPI): void {
       lines.push(border(`Output:     ${output.length}`));
       lines.push(`├${"─".repeat(innerW)}┤`);
 
-      if (toolCalls.length > 0) {
-        lines.push(border("Recent tools:"));
-        const maxTools = 5;
-        const recent = toolCalls.slice(-maxTools);
-        for (const t of recent) {
-          const inputStr = Object.keys(t.input).length > 0
-            ? ` (${Object.keys(t.input).join(", ")})`
-            : "";
-          lines.push(border(`  • ${t.name}${inputStr}`));
+      // Tool loop state
+      if (state.toolCounts.length > 0) {
+        lines.push(border("Tool loops:"));
+        for (const t of state.toolCounts) {
+          const prefix = t.approaching ? "⚠" : "·";
+          lines.push(border(`  ${prefix} ${t.name}: ${t.count}/${t.threshold}`));
         }
       }
 
-      if (reasoning.length > 0) {
-        lines.push(border("Recent reasoning:"));
-        const maxReasoning = 3;
-        const recent = reasoning.slice(-maxReasoning);
-        for (const r of recent) {
-          const truncated = r.text.length > innerW - 4 ? r.text.slice(0, innerW - 7) + "…" : r.text;
-          lines.push(border(`  • ${truncated}`));
+      // Chain loop state
+      if (state.chainFrequencies.length > 0) {
+        lines.push(border("Chain loops:"));
+        const maxChains = 3;
+        const recent = state.chainFrequencies.slice(0, maxChains);
+        for (const c of recent) {
+          const prefix = c.approaching ? "⚠" : "·";
+          const shortSeq = c.sequence.length > innerW - 8 ? c.sequence.slice(0, innerW - 11) + "…" : c.sequence;
+          lines.push(border(`  ${prefix} ${shortSeq}: ${c.count}/${c.threshold}`));
         }
       }
 
-      if (output.length > 0) {
-        lines.push(border("Recent output:"));
-        const maxOutput = 3;
-        const recent = output.slice(-maxOutput);
-        for (const o of recent) {
-          const truncated = o.text.length > innerW - 4 ? o.text.slice(0, innerW - 7) + "…" : o.text;
-          lines.push(border(`  • ${truncated}`));
-        }
+      // Reasoning loop state
+      if (state.reasoningLast) {
+        const r = state.reasoningLast;
+        const prefix = r.approaching ? "⚠" : "·";
+        const shortText = r.text.length > innerW - 10 ? r.text.slice(0, innerW - 13) + "…" : r.text;
+        lines.push(border(`  ${prefix} Reasoning: ${shortText}`));
+        lines.push(border(`      similarity: ${r.similarity.toFixed(2)} / ${r.threshold}`));
+      }
+
+      // Output loop state
+      if (state.outputLast) {
+        const o = state.outputLast;
+        const prefix = o.approaching ? "⚠" : "·";
+        const shortText = o.text.length > innerW - 10 ? o.text.slice(0, innerW - 13) + "…" : o.text;
+        lines.push(border(`  ${prefix} Output: ${shortText}`));
+        lines.push(border(`      similarity: ${o.similarity.toFixed(2)} / ${o.threshold}`));
       }
 
       if (toolCalls.length === 0 && reasoning.length === 0 && output.length === 0) {

@@ -248,6 +248,65 @@ export class LoopDetector {
     return [];
   }
 
+  /**
+   * Get the current detector state for debugging — includes threshold proximity.
+   */
+  getDebugState(): {
+    toolCounts: Array<{ name: string; count: number; threshold: number; approaching: boolean }>;
+    chainWindow: string[];
+    chainFrequencies: Array<{ sequence: string; count: number; threshold: number; approaching: boolean }>;
+    reasoningLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null;
+    outputLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null;
+  } {
+    const toolCounts = Array.from(this.toolCounts.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        threshold: this.config.detection.toolLoopThreshold,
+        approaching: count > 0 && count >= this.config.detection.toolLoopThreshold - 1,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const chainFrequencies = Array.from(this.chainFrequencies.entries())
+      .map(([sequence, count]) => ({
+        sequence,
+        count,
+        threshold: this.config.detection.chainLoopThreshold,
+        approaching: count > 0 && count >= this.config.detection.chainLoopThreshold - 1,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    let reasoningLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null = null;
+    if (this.recentReasoning.length >= 2) {
+      const prev = this.recentReasoning[this.recentReasoning.length - 2].text;
+      const curr = this.recentReasoning[this.recentReasoning.length - 1].text;
+      const sim = this.computeSimilarity(prev, curr);
+      const threshold = this.config.detection.reasoningLoopThreshold;
+      reasoningLast = {
+        text: curr,
+        similarity: Math.round(sim * 1000) / 1000,
+        threshold,
+        approaching: sim >= threshold - 0.05,
+      };
+    }
+
+    let outputLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null = null;
+    if (this.recentOutput.length >= 2) {
+      const prev = this.recentOutput[this.recentOutput.length - 2].text;
+      const curr = this.recentOutput[this.recentOutput.length - 1].text;
+      const sim = this.computeSimilarity(prev, curr);
+      const threshold = this.config.detection.outputSimilarityThreshold;
+      outputLast = {
+        text: curr,
+        similarity: Math.round(sim * 1000) / 1000,
+        threshold,
+        approaching: sim >= threshold - 0.05,
+      };
+    }
+
+    return { toolCounts, chainWindow: [...this.chainWindow], chainFrequencies, reasoningLast, outputLast };
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────
 
   private checkChainLoop(toolName: string): DetectionResult | null {
