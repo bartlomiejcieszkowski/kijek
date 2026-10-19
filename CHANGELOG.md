@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `replay()` helper — replay debug dumps through the detector for test reproduction
 - Fixture test — auto-discovers and replays `.json` files from `tests/fixtures/`
 - Debug dump directory — `~/.pi/agent/extensions/kijek/debug/`
+- Debug overlay threshold proximity — ⚠ warnings when approaching detection thresholds, similarity scores for reasoning/output loops
 
 ### Changed
 
