@@ -143,11 +143,17 @@ Use `/kijek-debug` to view the current detector state in real time:
 
 ```
 src/
-├── kijek.ts      # Main extension — event hooks, commands, overlays
-├── detector.ts   # Detection engine — n-gram similarity, loop detection
-├── nudge.ts      # Nudge strategies — silent / alert / interrupt
-├── config.ts     # Configuration — loading, validation, presets
-└── log.ts        # Log management — overlay, session persistence
+├── kijek.ts        # Main extension — event hooks, commands, overlays
+├── detector.ts     # N-gram helpers, types, re-exports
+├── detectors/
+│   ├── index.ts    # LoopDetector — composes all sub-detectors
+│   ├── tool-loop.ts        # Single-tool loop detection
+│   ├── chain-loop.ts       # Chain sequence detection
+│   ├── reasoning-loop.ts   # Reasoning similarity detection
+│   └── output-loop.ts      # Output similarity detection
+├── nudge.ts        # Nudge strategies — silent / alert / interrupt
+├── config.ts       # Configuration — loading, validation, presets
+└── log.ts          # Log management — overlay, session persistence
 ```
 
 ## Development
