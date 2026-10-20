@@ -1,8 +1,11 @@
-import { DEFAULT_CONFIG, type KijekConfig } from "./config.js";
+/**
+ * Loop detection engine — n-gram similarity, loop detection, debug dumps.
+ *
+ * This module re-exports the composed LoopDetector from the sub-detector
+ * modules, plus the standalone n-gram utilities.
+ */
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// ── Types (re-exported for convenience) ─────────────────────────────────
 
 export interface DetectionResult {
   type: "toolLoop" | "chainLoop" | "reasoningLoop" | "outputLoop";
@@ -34,9 +37,7 @@ export interface DebugDump {
   events: Array<ToolCallEvent | ReasoningEvent | OutputEvent>;
 }
 
-// ---------------------------------------------------------------------------
-// Internal: N-gram helpers
-// ---------------------------------------------------------------------------
+// ── N-gram helpers ──────────────────────────────────────────────────────
 
 /**
  * Tokenise plain text: split on whitespace / punctuation, lower-case.
@@ -87,307 +88,25 @@ export function ngramSimilarity(a: string, b: string): number {
   return jaccard(gramA, gramB);
 }
 
-// ---------------------------------------------------------------------------
-// LoopDetector
-// ---------------------------------------------------------------------------
-
-export class LoopDetector {
-  private toolCounts = new Map<string, number>();
-  private chainWindow: string[] = [];
-  private chainFrequencies: Map<string, number> = new Map();
-  private recentReasoning: { text: string }[] = [];
-  private recentOutput: { text: string }[] = [];
-  private toolCallHistory: { name: string; input: Record<string, unknown> }[] = [];
-
-  private readonly config: KijekConfig;
-
-  constructor(config: Partial<KijekConfig> = {}) {
-    this.config = {
-      ...DEFAULT_CONFIG,
-      ...config,
-      detection: { ...DEFAULT_CONFIG.detection, ...(config.detection ?? {}) },
-      enabled: { ...DEFAULT_CONFIG.enabled, ...(config.enabled ?? {}) },
-    };
-  }
-
-  // ── Public API ────────────────────────────────────────────────────────
-
-  /**
-   * Signal the start of a new assistant message.
-   * Resets per-message tool loop state.
-   */
-  startMessage(): void {
-    this.toolCounts.clear();
-  }
-
-  /**
-   * Record a tool call within the current message.
-   * Returns DetectionResult if a loop is detected, null otherwise.
-   */
-  recordToolCall(
-    toolName: string,
-    args?: Record<string, unknown>,
-  ): DetectionResult | null {
-    // --- Single-tool loop detection (per-message) ---
-    const currentCount = this.toolCounts.get(toolName) ?? 0;
-    const newCount = currentCount + 1;
-    this.toolCounts.set(toolName, newCount);
-
-    if (
-      this.config.enabled.toolLoop &&
-      newCount >= this.config.detection.toolLoopThreshold
-    ) {
-      return {
-        type: "toolLoop",
-        details: `Tool '${toolName}' called ${newCount} times in this message`,
-        count: newCount,
-      };
-    }
-
-    // --- Chain loop detection (cross-message) ---
-    if (this.config.enabled.chainLoop) {
-      const chainResult = this.checkChainLoop(toolName);
-      if (chainResult) return chainResult;
-    }
-
-    // Track full event
-    this.toolCallHistory.push({ name: toolName, input: args || {} });
-
-    return null;
-  }
-
-  /**
-   * Record a reasoning block.
-   * Returns DetectionResult if a loop is detected, null otherwise.
-   */
-  recordReasoning(text: string): DetectionResult | null {
-    if (!this.config.enabled.reasoningLoop) return null;
-    if (text.trim().length === 0) return null;
-
-    if (this.recentReasoning.length > 0) {
-      const prev = this.recentReasoning[this.recentReasoning.length - 1];
-      const sim = this.computeSimilarity(prev.text, text);
-      const threshold = this.config.detection?.outputSimilarityThreshold ?? 0.85;
-      if (sim >= threshold) {
-        return {
-          type: "reasoningLoop",
-          details: `Reasoning similarity of ${(sim * 100).toFixed(1)}% detected (threshold: ${(threshold * 100).toFixed(1)}%)`,
-          count: this.recentReasoning.length + 1,
-        };
-      }
-    }
-
-    this.recentReasoning.push({ text });
-    return null;
-  }
-
-  /**
-   * Record output text.
-   * Returns DetectionResult if a loop is detected, null otherwise.
-   */
-  recordOutput(text: string): DetectionResult | null {
-    if (!this.config.enabled.outputLoop) return null;
-    if (text.trim().length === 0) return null;
-
-    if (this.recentOutput.length > 0) {
-      const prev = this.recentOutput[this.recentOutput.length - 1];
-      const sim = this.computeSimilarity(prev.text, text);
-      const threshold = this.config.detection?.outputSimilarityThreshold ?? 0.85;
-      if (sim >= threshold) {
-        return {
-          type: "outputLoop",
-          details: `Output similarity of ${(sim * 100).toFixed(1)}% detected (threshold: ${(threshold * 100).toFixed(1)}%)`,
-          count: this.recentOutput.length + 1,
-        };
-      }
-    }
-
-    this.recentOutput.push({ text });
-    return null;
-  }
-
-  /**
-   * Reset all detector state (call at end of run/turn).
-   */
-  reset(): void {
-    this.toolCounts.clear();
-    this.chainWindow = [];
-    this.chainFrequencies.clear();
-    this.recentReasoning = [];
-    this.recentOutput = [];
-    this.toolCallHistory = [];
-  }
-
-  /**
-   * Get the current tool call history (for logging and debug).
-   */
-  getToolCallHistory(): { name: string; input: Record<string, unknown> }[] {
-    return [...this.toolCallHistory];
-  }
-
-  /**
-   * Get all recorded reasoning blocks.
-   */
-  getReasoningBlocks(): { text: string }[] {
-    return [...this.recentReasoning];
-  }
-
-  /**
-   * Get all recorded output blocks.
-   */
-  getOutputBlocks(): { text: string }[] {
-    return [...this.recentOutput];
-  }
-
-  /**
-   * Get all detection results that occurred during this message.
-   */
-  getDetectionResults(): DetectionResult[] {
-    // We store results internally — for replay we need to capture them.
-    // Since we don't store them, we return the current state for inspection.
-    return [];
-  }
-
-  /**
-   * Get the current detector state for debugging — includes threshold proximity.
-   */
-  getDebugState(): {
-    toolCounts: Array<{ name: string; count: number; threshold: number; approaching: boolean }>;
-    chainWindow: string[];
-    chainFrequencies: Array<{ sequence: string; count: number; threshold: number; approaching: boolean }>;
-    reasoningLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null;
-    outputLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null;
-  } {
-    const toolCounts = Array.from(this.toolCounts.entries())
-      .map(([name, count]) => ({
-        name,
-        count,
-        threshold: this.config.detection.toolLoopThreshold,
-        approaching: count > 0 && count >= this.config.detection.toolLoopThreshold - 1,
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    const chainFrequencies = Array.from(this.chainFrequencies.entries())
-      .map(([sequence, count]) => ({
-        sequence,
-        count,
-        threshold: this.config.detection.chainLoopThreshold,
-        approaching: count > 0 && count >= this.config.detection.chainLoopThreshold - 1,
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    let reasoningLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null = null;
-    if (this.recentReasoning.length >= 2) {
-      const prev = this.recentReasoning[this.recentReasoning.length - 2].text;
-      const curr = this.recentReasoning[this.recentReasoning.length - 1].text;
-      const sim = this.computeSimilarity(prev, curr);
-      const threshold = this.config.detection.reasoningLoopThreshold;
-      reasoningLast = {
-        text: curr,
-        similarity: Math.round(sim * 1000) / 1000,
-        threshold,
-        approaching: sim >= threshold - 0.05,
-      };
-    }
-
-    let outputLast: { text: string; similarity: number; threshold: number; approaching: boolean } | null = null;
-    if (this.recentOutput.length >= 2) {
-      const prev = this.recentOutput[this.recentOutput.length - 2].text;
-      const curr = this.recentOutput[this.recentOutput.length - 1].text;
-      const sim = this.computeSimilarity(prev, curr);
-      const threshold = this.config.detection.outputSimilarityThreshold;
-      outputLast = {
-        text: curr,
-        similarity: Math.round(sim * 1000) / 1000,
-        threshold,
-        approaching: sim >= threshold - 0.05,
-      };
-    }
-
-    return { toolCounts, chainWindow: [...this.chainWindow], chainFrequencies, reasoningLast, outputLast };
-  }
-
-  // ── Private helpers ───────────────────────────────────────────────────
-
-  private checkChainLoop(toolName: string): DetectionResult | null {
-    this.chainWindow.push(toolName);
-
-    const windowSize = this.config.detection?.chainLoopWindowSize ?? 3;
-    if (this.chainWindow.length > windowSize) {
-      this.chainWindow.shift();
-    }
-
-    if (this.chainWindow.length < 2) return null;
-
-    // Check subsequences of length 2 to windowSize
-    for (let seqLen = Math.min(windowSize, this.chainWindow.length); seqLen >= 2; seqLen--) {
-      for (let start = 0; start <= this.chainWindow.length - seqLen; start++) {
-        const seq = this.chainWindow.slice(start, start + seqLen);
-
-        // Skip sequences with only one distinct tool name
-        if (new Set(seq).size < 2) continue;
-
-        const key = seq.join(",");
-
-        // Track frequency across the entire history
-        const freq = (this.chainFrequencies.get(key) ?? 0) + 1;
-        this.chainFrequencies.set(key, freq);
-
-        const threshold = this.config.detection.chainLoopThreshold;
-        if (freq >= threshold) {
-          return {
-            type: "chainLoop",
-            details: `Chain loop detected: '${key}' repeated ${freq} times`,
-            count: freq,
-          };
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private computeSimilarity(a: string, b: string): number {
-    const tokensA = tokenize(a);
-    const tokensB = tokenize(b);
-
-    // If either text has fewer than n tokens, use exact match instead
-    const n = 5;
-    if (tokensA.length < n && tokensB.length < n) {
-      return a.toLowerCase() === b.toLowerCase() ? 1 : 0;
-    }
-
-    const gramA = nGrams(tokensA, n);
-    const gramB = nGrams(tokensB, n);
-    return jaccard(gramA, gramB);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Replay helper
-// ---------------------------------------------------------------------------
-
 /**
- * Replay a debug dump through a fresh LoopDetector and return the detector.
- * The returned detector has all state populated as if the events were received live.
+ * Compute n-gram similarity between two text strings.
+ * Uses 5-gram Jaccard similarity over tokenised text.
  */
-export function replay(dump: DebugDump): LoopDetector {
-  const detector = new LoopDetector();
-  detector.startMessage();
+export function computeSimilarityFn(a: string, b: string): number {
+  const tokensA = tokenize(a);
+  const tokensB = tokenize(b);
 
-  for (const event of dump.events) {
-    switch (event.type) {
-      case "tool_call":
-        detector.recordToolCall(event.toolName, event.input);
-        break;
-      case "reasoning":
-        detector.recordReasoning(event.text);
-        break;
-      case "output":
-        detector.recordOutput(event.text);
-        break;
-    }
+  // If either text has fewer than n tokens, use exact match instead
+  const n = 5;
+  if (tokensA.length < n && tokensB.length < n) {
+    return a.toLowerCase() === b.toLowerCase() ? 1 : 0;
   }
 
-  return detector;
+  const gramA = nGrams(tokensA, n);
+  const gramB = nGrams(tokensB, n);
+  return jaccard(gramA, gramB);
 }
+
+// ── Re-export composed LoopDetector and replay ──────────────────────────
+
+export { LoopDetector, replay } from "./detectors/index.js";
