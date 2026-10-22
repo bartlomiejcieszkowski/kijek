@@ -595,29 +595,30 @@ function registerCommands(api: MinimalExtensionAPI): void {
   api.registerCommand("kijek", {
     description: "Manually nudge the LLM (hit it with a stick)",
     handler: async (args: string, ctx: MinimalExtensionCommandContext) => {
-      if (!logManager) {
+      if (!detector) {
         ctx.ui.notify("Kijek not initialised. Start a new session.", "warning");
         return;
       }
 
       const customMessage = args.trim() || undefined;
+      const nudgeText = customMessage || getNudgePrompt(config);
 
-      // Build a manual detection result
-      const result: DetectionResult = {
-        type: "toolLoop",
-        details: customMessage || "Manual nudge — user hit the LLM with a stick",
-        count: 1,
-      };
-
-      // Apply the configured nudge
-      await applyNudge(config, result, {
-        pi,
-        ui: ctx.ui,
-        isIdle: ctx.isIdle,
-      });
+      // Always interrupt — steer mid-stream or send as normal user message
+      if (ctx.isIdle()) {
+        pi.sendUserMessage(nudgeText);
+      } else {
+        pi.sendUserMessage(nudgeText, { deliverAs: "steer" });
+      }
 
       // Log the manual nudge
-      logManager.addEntry(result, config.nudgeMode);
+      if (logManager) {
+        const result: DetectionResult = {
+          type: "toolLoop",
+          details: customMessage || "Manual nudge — user hit the LLM with a stick",
+          count: 1,
+        };
+        logManager.addEntry(result, config.nudgeMode);
+      }
 
       ctx.ui.notify(`╰( °□°)つ───🤖💬\nStick applied!`, "info");
     },
