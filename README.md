@@ -156,6 +156,15 @@ src/
 └── log.ts          # Log management — overlay, session persistence
 ```
 
+### Debug Overlay
+
+Use `/kijek-debug` to view the current detector state in real time:
+
+- Tool call count with names and input parameters
+- Reasoning block count with text snippets
+- Output block count with text snippets
+- ⚠ Warnings when approaching detection thresholds
+
 ## Development
 
 ```bash
